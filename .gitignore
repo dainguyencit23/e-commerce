@@ -1,0 +1,28 @@
+# Node / React
+/node_modules
+Frontend/E-commerce/node_modules
+
+# .NET build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+*.staticwebassets.endpoints.json
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Publish / release
+publish/
+*.nupkg
+*.snupkg
+
+# Environment / secrets
+*.env
