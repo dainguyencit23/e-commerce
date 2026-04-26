@@ -27,8 +27,5 @@ namespace E_commerce.Models
         public Guid BrandId { get; set; }
         [ForeignKey(nameof(BrandId))]
         public virtual Brand Brand { get; set; }
-
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();// trong các mốt quan hệ một nhiều
-                                                                                                     // thì cần tạo ICollection để nhận biết
     }
 }
