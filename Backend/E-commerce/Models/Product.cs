@@ -21,11 +21,11 @@ namespace E_commerce.Models
         [Required(ErrorMessage = "CategoryId is required.")]
         public Guid CategoryId { get; set; }
         
-        [ForeignKey("CategoryId")]
+        [ForeignKey(nameof(CategoryId))] //nameof dùng để compile báo lỗi nếu sai variable
         public virtual Category Category { get; set; } //virtual dùng để tạo lazyloading
                                                        //là khi nào cần thì mới tải về giúp tiết kiệm bộ nhớ và tối ưu thời gian'
         public Guid BrandId { get; set; }
-        [ForeignKey("BrandId")]
+        [ForeignKey(nameof(BrandId))]
         public virtual Brand Brand { get; set; }
 
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();// trong các mốt quan hệ một nhiều
