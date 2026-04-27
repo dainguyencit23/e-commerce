@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { products, getReviewsByProduct, getCategoryById, formatPrice } from '../../data/mockData';
+import { getReviewsByProduct, getCategoryById, formatPrice } from '../../data/mockData';
+import { useProducts } from '../../context/ProductContext';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast, ToastContainer } from '../../hooks/useToast';
 import './ProductDetailPage.css';
 
 function StarRating({ rating, size = 14 }) {
@@ -18,8 +21,11 @@ export default function ProductDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { toasts, show: showToast } = useToast();
+  const { getProductBySlug } = useProducts();
 
-  const product = products.find(p => p.slug === slug);
+  const product = getProductBySlug(slug);
   const [selectedVariant, setSelectedVariant] = useState(product?.variants[0] || null);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
@@ -40,19 +46,29 @@ export default function ProductDetailPage() {
   const allImages = [product.thumbnail, ...(product.images || [])];
 
   const handleAddToCart = () => {
+    if (!user) {
+      showToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'warning');
+      return;
+    }
     if (!selectedVariant) return;
     addToCart(product, selectedVariant, qty);
     setAdded(true);
+    showToast(`Đã thêm "${product.name}" vào giỏ hàng`, 'success');
     setTimeout(() => setAdded(false), 2000);
   };
 
   const handleBuyNow = () => {
+    if (!user) {
+      showToast('Vui lòng đăng nhập để mua hàng', 'warning');
+      return;
+    }
     if (!selectedVariant) return;
     addToCart(product, selectedVariant, qty);
     navigate('/cart');
   };
 
   return (
+    <>
     <div className="product-detail-page">
       <div className="container">
         {/* Breadcrumb */}
@@ -193,5 +209,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+    <ToastContainer toasts={toasts} />
+    </>
   );
 }

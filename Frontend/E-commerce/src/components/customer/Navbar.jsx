@@ -11,6 +11,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -44,15 +45,22 @@ export default function Navbar() {
               {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
             </Link>
             {user ? (
-              <div className="navbar-user">
+              <div
+                className="navbar-user"
+                onMouseEnter={() => setDropdownOpen(true)}
+                onMouseLeave={() => setDropdownOpen(false)}
+                onClick={()=> setDropdownOpen(true)}
+              >
                 <span className="navbar-user-name">{user.name.split(' ').slice(-1)[0]}</span>
-                <div className="navbar-dropdown">
-                  {user.role === 'admin' && <Link to="/admin/dashboard">Admin Panel</Link>}
-                  {user.role === 'staff' && <Link to="/staff/orders">Staff Panel</Link>}
-                  <Link to="/account">Tài khoản</Link>
-                  <Link to="/orders">Đơn hàng</Link>
-                  <button onClick={handleLogout}>Đăng xuất</button>
-                </div>
+                {dropdownOpen && (
+                  <div className="navbar-dropdown">
+                    {user.role === 'admin' && <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)}>Admin Panel</Link>}
+                    {user.role === 'staff' && <Link to="/staff/orders" onClick={() => setDropdownOpen(false)}>Staff Panel</Link>}
+                    <Link to="/account" onClick={() => setDropdownOpen(false)}>Tài khoản</Link>
+                    <Link to="/orders" onClick={() => setDropdownOpen(false)}>Đơn hàng</Link>
+                    <button onClick={() => { setDropdownOpen(false); handleLogout(); }}>Đăng xuất</button>
+                  </div>
+                )}
               </div>
             ) : (
               <Link to="/login" className="btn btn-primary btn-sm">Đăng nhập</Link>

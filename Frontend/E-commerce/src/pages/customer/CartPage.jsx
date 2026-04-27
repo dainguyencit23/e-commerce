@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { formatPrice } from '../../data/mockData';
+import {useAuth} from "../../context/AuthContext"
 import './CartPage.css';
 
 export default function CartPage() {
@@ -8,7 +9,7 @@ export default function CartPage() {
   const navigate = useNavigate();
   const shipping = subtotal >= 5000000 ? 0 : 30000;
   const total = subtotal + shipping;
-
+  const {user} = useAuth();
   if (items.length === 0) {
     return (
       <div className="cart-page">
@@ -16,7 +17,7 @@ export default function CartPage() {
           <h1 className="page-title">Giỏ hàng</h1>
           <div className="empty-state">
             <div className="empty-state-icon">🛒</div>
-            <p className="empty-state-text">Giỏ hàng của bạn đang trống</p>
+            <p className="empty-state-text">{user? "Giỏ hàng của bạn đang trống" : "Vui lòng đăng nhập để xem giỏ hàng."}</p>
             <button className="btn btn-primary mt-4" onClick={() => navigate('/products')}>Tiếp tục mua sắm</button>
           </div>
         </div>

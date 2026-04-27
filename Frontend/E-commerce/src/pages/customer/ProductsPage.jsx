@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { products, categories, formatPrice } from '../../data/mockData';
+import { categories, formatPrice } from '../../data/mockData';
+import { useProducts } from '../../context/ProductContext';
 import './ProductsPage.css';
 
 function StarRating({ rating }) {
@@ -23,6 +24,7 @@ export default function ProductsPage() {
   const [sort, setSort] = useState('default');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [brand, setBrand] = useState('');
+  const { products } = useProducts();
 
   const brands = [...new Set(products.map(p => p.brand))];
 

@@ -92,6 +92,7 @@
 .navbar-user {
   position: relative;
   cursor: pointer;
+  padding-bottom: 6px;
 }
 
 .navbar-user-name {
@@ -110,20 +111,19 @@
 .navbar-user:hover .navbar-user-name { background: var(--gray-200); }
 
 .navbar-dropdown {
-  display: none;
+  display: flex;
+  flex-direction: column;
   position: absolute;
-  top: calc(100% + 6px);
+  top: 100%;
   right: 0;
+  z-index: 200;
+  min-width: 160px;
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  min-width: 160px;
-  overflow: hidden;
   border: 1px solid var(--gray-100);
-  z-index: 200;
+  overflow: hidden;
 }
-
-.navbar-user:hover .navbar-dropdown { display: flex; flex-direction: column; }
 
 .navbar-dropdown a,
 .navbar-dropdown button {
@@ -136,7 +136,10 @@
 }
 
 .navbar-dropdown a:hover,
-.navbar-dropdown button:hover { background: var(--gray-50); }
+.navbar-dropdown button:hover { 
+  background: var(--primary); 
+  color: white;
+}
 
 .navbar-toggle {
   display: none;

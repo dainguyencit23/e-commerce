@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getFeaturedProducts, categories, promotions, formatPrice } from '../../data/mockData';
+import { categories, promotions, formatPrice } from '../../data/mockData';
+import { useProducts } from '../../context/ProductContext';
 import './HomePage.css';
 
 function StarRating({ rating }) {
@@ -40,6 +41,7 @@ const SLIDES = [
 ];
 
 export default function HomePage() {
+  const { getFeaturedProducts } = useProducts();
   const featured = getFeaturedProducts();
   const [slide, setSlide] = useState(0);
   const navigate = useNavigate();

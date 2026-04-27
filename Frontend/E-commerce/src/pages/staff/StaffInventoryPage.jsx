@@ -1,19 +1,16 @@
 import { useState } from 'react';
-import { products as initProducts, categories, formatPrice } from '../../data/mockData';
+import { categories, formatPrice } from '../../data/mockData';
+import { useProducts } from '../../context/ProductContext';
 import '../admin/AdminPage.css';
 
 export default function StaffInventoryPage() {
-  const [productList, setProductList] = useState(initProducts);
+  const { products: productList, updateProduct } = useProducts();
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [newStock, setNewStock] = useState('');
 
-  const filtered = productList.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) || p.brand.toLowerCase().includes(search.toLowerCase())
-  );
-
   const handleUpdateStock = (id) => {
-    setProductList(l => l.map(p => p.id === id ? { ...p, stock: Number(newStock) } : p));
+    updateProduct(id, { stock: Number(newStock) });
     setEditingId(null);
     setNewStock('');
   };
@@ -25,6 +22,9 @@ export default function StaffInventoryPage() {
     return { label: 'Còn hàng', cls: 'badge-green' };
   };
 
+  const filtered = productList.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) || p.brand.toLowerCase().includes(search.toLowerCase())
+  );
   const lowStockCount = productList.filter(p => p.stock < 10).length;
 
   return (
