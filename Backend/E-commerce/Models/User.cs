@@ -15,6 +15,8 @@ namespace E_commerce.Models
         public string Email { get; set; }
         [StringLength(100)]
         public string FullName { get; set; }
+        [StringLength(10)]
+        public string PhoneNumber { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         [Column(TypeName = "decimal(18,2)"), Range(0,double.MaxValue)]
         public decimal totalSpend { get; set; } = 0;

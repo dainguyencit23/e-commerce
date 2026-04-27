@@ -16,8 +16,8 @@ namespace E_commerce.Models
         [Column(TypeName = "decimal(18,2)")] //định nghĩa cho decimal trong db
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
-        [Range(0, int.MaxValue,ErrorMessage ="Quantity must be a positve number")] //constrain giá trị không âm
-        public int Quantity { get; set; }
+        [Range(0.0,5.0)]
+        public double AverangeRating { get; set; } = 5.0;
         [Required(ErrorMessage = "CategoryId is required.")]
         public Guid CategoryId { get; set; }
         
