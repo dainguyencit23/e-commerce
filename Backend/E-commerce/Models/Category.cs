@@ -12,6 +12,7 @@ namespace E_commerce.Models
         public string Name { get; set; }
         [Required(ErrorMessage ="Slug is required.")]
         [StringLength(50)]
+        public string Slug { get; set; }
         
         public virtual ICollection<Product> Products { get; set; } = new List<Product>();
     }
