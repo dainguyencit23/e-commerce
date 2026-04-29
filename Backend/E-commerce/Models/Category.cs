@@ -9,7 +9,10 @@ namespace E_commerce.Models
         public Guid Id { get; set; }
         [Required(ErrorMessage = "Name is required.")]
         [StringLength(100)]
-        public string Name { get; set; } 
+        public string Name { get; set; }
+        [Required(ErrorMessage ="Slug is required.")]
+        [StringLength(50)]
+        
         public virtual ICollection<Product> Products { get; set; } = new List<Product>();
     }
 }
