@@ -15,9 +15,19 @@ namespace E_commerce.Models
         [ForeignKey(nameof(UserId))]
         public virtual User User { get; set; }
 
+        public Guid StaffId { get; set; }
+
+        [ForeignKey]
+        public virtual User User { get; set; }
+
+        public Guid OrderId { get; set; }
+
+        [ForeignKey]
+        public virtual Order Order { get; set; }
+
         [Required(ErrorMessage = "Title is required.")]
         [StringLength(150)]
-        public string Title { get; set; }
+        public string Subject { get; set; }
 
         [Required(ErrorMessage = "Message is required.")]
         [StringLength(1000)]
@@ -28,8 +38,7 @@ namespace E_commerce.Models
         public string Status { get; set; } = "Pending"; 
         // Pending / InProgress / Resolved
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        public DateTime? UpdatedAt { get; set; } // có thể null
     }
 }
