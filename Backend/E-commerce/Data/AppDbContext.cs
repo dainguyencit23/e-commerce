@@ -27,61 +27,127 @@ namespace E_commerce.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Unique indexes
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email).IsUnique();
+                .HasIndex(u => u.Email)
+                .IsUnique();
 
             modelBuilder.Entity<Voucher>()
-                .HasIndex(v => v.Code).IsUnique();
+                .HasIndex(v => v.Code)
+                .IsUnique();
 
-            // User ↔ Cart (1-to-1)
-            modelBuilder.Entity<Cart>()
-                .HasOne(c => c.User)
-                .WithOne(u => u.Cart)
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Cart)
+                .WithOne(c => c.User)
                 .HasForeignKey<Cart>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // SupportRequest → User (customer) — Restrict để tránh multiple cascade paths
-            modelBuilder.Entity<SupportRequest>()
-                .HasOne(sr => sr.User)
-                .WithMany(u => u.SupportRequests)
-                .HasForeignKey(sr => sr.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // SupportRequest → User (staff) — no nav on User side
-            modelBuilder.Entity<SupportRequest>()
-                .HasOne(sr => sr.Staff)
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Role)
                 .WithMany()
-                .HasForeignKey(sr => sr.StaffId)
+                .HasForeignKey(ui => ui.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // SupportRequest ↔ Order (1-to-1, FK on SupportRequest)
-            modelBuilder.Entity<SupportRequest>()
-                .HasOne(sr => sr.Order)
-                .WithOne(o => o.SupportRequest)
-                .HasForeignKey<SupportRequest>(sr => sr.OrderId)
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Cart)
+                .WithMany(c => c.CartItems)
+                .HasForeignKey(ci => ci.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.ProductVariant)
+                .WithMany()
+                .HasForeignKey(c => c.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Order → User — Restrict (tránh cascade conflict với SupportRequest)
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Brand)
+                .WithMany(b => b.Products)
+                .HasForeignKey(p => p.BrandId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProductVariant>()
+                .HasOne(pv => pv.Product)
+                .WithMany(p => p.ProductVariants)
+                .HasForeignKey(pv => pv.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductImage>()
+                .HasOne(p => p.Product)
+                .WithMany(p => p.ProductImages)
+                .HasForeignKey(pi => pi.ProductId);
+
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany()
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Review → User — Restrict
-            modelBuilder.Entity<Review>()
-                .HasOne(r => r.User)
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Voucher)
                 .WithMany()
-                .HasForeignKey(r => r.UserId)
+                .HasForeignKey(v => v.VoucherId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Order>()
+                .HasOne(p => p.PaymentMethod)
+                .WithMany()
+                .HasForeignKey(pi => pi.PaymentMethodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Review → Product — Cascade
+            modelBuilder.Entity<OrderDetail>()
+                .HasOne(o => o.Order)
+                .WithMany(oi => oi.OrderDetails)
+                .HasForeignKey(o => o.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderDetail>()
+                .HasOne(od => od.ProductVariant)
+                .WithMany()
+                .HasForeignKey(od => od.ProductVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.Product)
                 .WithMany(p => p.Reviews)
                 .HasForeignKey(r => r.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.OrderDetail)
+                .WithMany()
+                .HasForeignKey(r => r.OrderDetailId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.User)
+                .WithMany(u => u.SupportRequests)
+                .HasForeignKey(sr => sr.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.Staff)
+                .WithMany()
+                .HasForeignKey(sr => sr.StaffId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.Order)
+                .WithOne(o => o.SupportRequest)
+                .HasForeignKey<SupportRequest>(sr => sr.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }
