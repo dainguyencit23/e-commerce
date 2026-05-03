@@ -27,5 +27,8 @@ namespace E_commerce.Models
         public Guid BrandId { get; set; }
         [ForeignKey(nameof(BrandId))]
         public virtual Brand Brand { get; set; }
+
+        public virtual ICollection<CartItem> CartItems { get; set; }
+
     }
 }

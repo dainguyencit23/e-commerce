@@ -24,5 +24,10 @@ namespace E_commerce.Models
         [ForeignKey("RoleId")]
         public virtual Role Role { get; set; }
 
+        public virtual Cart Cart { get; set; }
+
+        public virtual ICollection<SupportRequest> SupportRequests { get; set; } = new List<SupportRequest>();
+
+
     }
 }
