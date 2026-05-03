@@ -15,19 +15,15 @@ namespace E_commerce.Models
         [ForeignKey(nameof(CartId))]
         public virtual Cart Cart { get; set; }
 
-        [Required(ErrorMessage = "ProductId is required.")]
-        public Guid ProductId { get; set; }
+        [Required(ErrorMessage = "Product Variant Id is required.")]
+        public Guid ProductVariantId { get; set; }
 
-        [ForeignKey(nameof(ProductId))]
-        public virtual Product Product { get; set; }
+        [ForeignKey(nameof(ProductVariantId))]
+        public virtual ProductVariant ProductVariant { get; set; }
 
         [Required]
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; } 
-
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

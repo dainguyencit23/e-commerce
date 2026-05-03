@@ -10,8 +10,7 @@ namespace E_commerce.Models
         [Required(ErrorMessage = "Name is required.")]
         [StringLength(100)]
         public string Name { get; set; }
-        public string? Slug { get; set; }
-        
+
         public virtual ICollection<Product> Products { get; set; } = new List<Product>();
     }
 }
