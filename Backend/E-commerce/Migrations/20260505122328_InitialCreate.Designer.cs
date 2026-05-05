@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace E_commerce.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260503015935_InitialCreate")]
+    [Migration("20260505122328_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -116,6 +116,9 @@ namespace E_commerce.Migrations
                     b.Property<Guid>("PaymentMethodId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PaymentMethodId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ShippingAddress")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -136,13 +139,20 @@ namespace E_commerce.Migrations
                     b.Property<Guid?>("VoucherId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("VoucherId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PaymentMethodId");
 
+                    b.HasIndex("PaymentMethodId1");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("VoucherId");
+
+                    b.HasIndex("VoucherId1");
 
                     b.ToTable("Orders");
                 });
@@ -162,6 +172,9 @@ namespace E_commerce.Migrations
                     b.Property<Guid>("ProductVariantId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ProductVariantId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -170,6 +183,8 @@ namespace E_commerce.Migrations
                     b.HasIndex("OrderId");
 
                     b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("ProductVariantId1");
 
                     b.ToTable("OrderDetails");
                 });
@@ -498,7 +513,7 @@ namespace E_commerce.Migrations
                     b.HasOne("E_commerce.Models.ProductVariant", "ProductVariant")
                         .WithMany("CartItems")
                         .HasForeignKey("ProductVariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cart");
@@ -509,10 +524,14 @@ namespace E_commerce.Migrations
             modelBuilder.Entity("E_commerce.Models.Order", b =>
                 {
                     b.HasOne("E_commerce.Models.PaymentMethod", "PaymentMethod")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("PaymentMethodId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("E_commerce.Models.PaymentMethod", null)
+                        .WithMany("Orders")
+                        .HasForeignKey("PaymentMethodId1");
 
                     b.HasOne("E_commerce.Models.User", "User")
                         .WithMany()
@@ -521,8 +540,13 @@ namespace E_commerce.Migrations
                         .IsRequired();
 
                     b.HasOne("E_commerce.Models.Voucher", "Voucher")
+                        .WithMany()
+                        .HasForeignKey("VoucherId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("E_commerce.Models.Voucher", null)
                         .WithMany("Orders")
-                        .HasForeignKey("VoucherId");
+                        .HasForeignKey("VoucherId1");
 
                     b.Navigation("PaymentMethod");
 
@@ -540,10 +564,14 @@ namespace E_commerce.Migrations
                         .IsRequired();
 
                     b.HasOne("E_commerce.Models.ProductVariant", "ProductVariant")
-                        .WithMany("OrderDetails")
+                        .WithMany()
                         .HasForeignKey("ProductVariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("E_commerce.Models.ProductVariant", null)
+                        .WithMany("OrderDetails")
+                        .HasForeignKey("ProductVariantId1");
 
                     b.Navigation("Order");
 
@@ -555,13 +583,13 @@ namespace E_commerce.Migrations
                     b.HasOne("E_commerce.Models.Brand", "Brand")
                         .WithMany("Products")
                         .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("E_commerce.Models.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Brand");
@@ -595,18 +623,19 @@ namespace E_commerce.Migrations
                 {
                     b.HasOne("E_commerce.Models.OrderDetail", "OrderDetail")
                         .WithMany()
-                        .HasForeignKey("OrderDetailId");
+                        .HasForeignKey("OrderDetailId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("E_commerce.Models.Product", "Product")
                         .WithMany("Reviews")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("E_commerce.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("OrderDetail");
@@ -646,7 +675,7 @@ namespace E_commerce.Migrations
                     b.HasOne("E_commerce.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Role");

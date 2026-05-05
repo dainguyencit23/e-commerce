@@ -1,6 +1,6 @@
 ﻿using E_commerce.Models;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.EntityFrameworkCore.SqlServer;
 namespace E_commerce.Data
 {
     public class AppDbContext : DbContext
@@ -43,7 +43,7 @@ namespace E_commerce.Data
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
-                .WithMany()
+                .WithMany(r => r.Users)
                 .HasForeignKey(ui => ui.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -55,7 +55,7 @@ namespace E_commerce.Data
 
             modelBuilder.Entity<CartItem>()
                 .HasOne(ci => ci.ProductVariant)
-                .WithMany()
+                .WithMany(pv => pv.CartItems)
                 .HasForeignKey(c => c.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
