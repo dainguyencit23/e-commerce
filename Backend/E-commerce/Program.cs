@@ -1,6 +1,8 @@
-using System.Text;
+    using System.Text;
 using E_commerce.Data;
 using E_commerce.Middlewares;
+using E_commerce.Services.Interfaces;
+using E_commerce.Services.Implementations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -30,6 +32,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+// Register Services
+builder.Services.AddScoped<ICartService, CartService>();
 
 // CORS
 builder.Services.AddCors(options =>
