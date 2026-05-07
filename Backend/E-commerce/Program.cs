@@ -1,6 +1,8 @@
 using System.Text;
 using E_commerce.Data;
 using E_commerce.Middlewares;
+using E_commerce.Services;
+using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
