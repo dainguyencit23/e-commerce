@@ -35,7 +35,7 @@ namespace E_commerce.Controllers.CategoryController
 
         // POST: api/categories
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateCategory(CategoryRequest request)
         {
             var category = new Category
@@ -57,7 +57,7 @@ namespace E_commerce.Controllers.CategoryController
 
         // PUT: api/categories/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateCategory(Guid id, CategoryRequest request)
         {
             var category = await _context.Categories.FindAsync(id);
@@ -80,7 +80,7 @@ namespace E_commerce.Controllers.CategoryController
 
         // DELETE: api/categories/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
             var category = await _context.Categories.FindAsync(id);

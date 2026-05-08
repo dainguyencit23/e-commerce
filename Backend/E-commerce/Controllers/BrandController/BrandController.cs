@@ -35,7 +35,7 @@ namespace E_commerce.Controllers.BrandController
 
         // POST: api/brands
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateBrand(BrandRequest request)
         {
             var brand = new Brand
@@ -57,7 +57,7 @@ namespace E_commerce.Controllers.BrandController
 
         // PUT: api/brands/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateBrand(Guid id, BrandRequest request)
         {
             var brand = await _context.Brands.FindAsync(id);
@@ -80,7 +80,7 @@ namespace E_commerce.Controllers.BrandController
 
         // DELETE: api/brands/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteBrand(Guid id)
         {
             var brand = await _context.Brands.FindAsync(id);
