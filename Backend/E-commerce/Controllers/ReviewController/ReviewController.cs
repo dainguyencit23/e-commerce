@@ -1,11 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
 using E_commerce.Data;
 using E_commerce.DTOs.Review;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace E_commerce.Controllers
+namespace E_commerce.Controllers.ReviewController
 {
-    [ApiController]
     [Route("api")]
+    [ApiController]
     public class ReviewController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -15,11 +16,11 @@ namespace E_commerce.Controllers
             _context = context;
         }
 
-        // ✅ GET: /api/products/{id}/reviews
+        // GET: api/products/{id}/reviews
         [HttpGet("products/{id}/reviews")]
-        public IActionResult GetReviewsByProduct(Guid id)
+        public async Task<IActionResult> GetProductReviews(Guid id)
         {
-            var reviews = _context.Reviews
+            var reviews = await _context.Reviews
                 .Where(r => r.ProductId == id)
                 .Select(r => new ReviewResponse
                 {
@@ -29,7 +30,7 @@ namespace E_commerce.Controllers
                     Comment = r.Comment,
                     CreatedDate = r.CreatedDate
                 })
-                .ToList();
+                .ToListAsync();
 
             return Ok(reviews);
         }
