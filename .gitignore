@@ -26,3 +26,6 @@ publish/
 
 # Environment / secrets
 *.env
+
+# Ignore for Macbook
+.DS_Store
