@@ -2,7 +2,7 @@ using E_commerce.Data;
 using E_commerce.DTOs.Image;
 using E_commerce.Models;
 using E_commerce.Services.Interfaces;
-
+using Microsoft.EntityFrameworkCore;
 namespace E_commerce.Services
 {
     public class ProductImageService: IProductImageService
