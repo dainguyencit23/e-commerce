@@ -1,100 +1,55 @@
-using E_commerce.Data;
 using E_commerce.DTOs.Brand;
-using E_commerce.Models;
+using E_commerce.Helpers;
+using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.Controllers.BrandController
 {
-    [Route("api/brands")]
     [ApiController]
+    [Route("api/brands")]
     public class BrandController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IBrandService _brandService;
 
-        public BrandController(AppDbContext context)
+        public BrandController(IBrandService brandService)
         {
-            _context = context;
+            _brandService = brandService;
         }
 
-        // GET: api/brands
         [HttpGet]
         public async Task<IActionResult> GetBrands()
         {
-            var brands = await _context.Brands
-                .Select(b => new BrandResponse
-                {
-                    Id = b.Id,
-                    Name = b.Name
-                })
-                .ToListAsync();
+            var result = await _brandService.GetBrands();
 
-            return Ok(brands);
+            return Ok(BaseResponse<List<BrandResponse>>.Ok(result));
         }
 
-        // POST: api/brands
         [HttpPost]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateBrand(BrandRequest request)
         {
-            var brand = new Brand
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name
-            };
+            var result = await _brandService.CreateBrand(request);
 
-            await _context.Brands.AddAsync(brand);
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new BrandResponse
-            {
-                Id = brand.Id,
-                Name = brand.Name
-            });
+            return Ok(BaseResponse<BrandResponse>.Ok(result));
         }
 
-        // PUT: api/brands/{id}
         [HttpPut("{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateBrand(Guid id, BrandRequest request)
         {
-            var brand = await _context.Brands.FindAsync(id);
+            var result = await _brandService.UpdateBrand(id, request);
 
-            if (brand == null)
-            {
-                return NotFound("Brand not found.");
-            }
-
-            brand.Name = request.Name;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new BrandResponse
-            {
-                Id = brand.Id,
-                Name = brand.Name
-            });
+            return Ok(BaseResponse<BrandResponse>.Ok(result));
         }
 
-        // DELETE: api/brands/{id}
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteBrand(Guid id)
         {
-            var brand = await _context.Brands.FindAsync(id);
+            await _brandService.DeleteBrand(id);
 
-            if (brand == null)
-            {
-                return NotFound("Brand not found.");
-            }
-
-            _context.Brands.Remove(brand);
-
-            await _context.SaveChangesAsync();
-
-            return Ok("Brand deleted successfully.");
+            return Ok(BaseResponse<string>.Ok(null, "Deleted successfully"));
         }
     }
 }

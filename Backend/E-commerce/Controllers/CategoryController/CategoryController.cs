@@ -1,100 +1,55 @@
-using E_commerce.Data;
 using E_commerce.DTOs.Category;
-using E_commerce.Models;
+using E_commerce.Helpers;
+using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.Controllers.CategoryController
 {
-    [Route("api/categories")]
     [ApiController]
+    [Route("api/categories")]
     public class CategoryController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoryController(AppDbContext context)
+        public CategoryController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
-        // GET: api/categories
         [HttpGet]
         public async Task<IActionResult> GetCategories()
         {
-            var categories = await _context.Categories
-                .Select(c => new CategoryResponse
-                {
-                    Id = c.Id,
-                    Name = c.Name
-                })
-                .ToListAsync();
+            var result = await _categoryService.GetCategories();
 
-            return Ok(categories);
+            return Ok(BaseResponse<List<CategoryResponse>>.Ok(result));
         }
 
-        // POST: api/categories
         [HttpPost]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateCategory(CategoryRequest request)
         {
-            var category = new Category
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name
-            };
+            var result = await _categoryService.CreateCategory(request);
 
-            await _context.Categories.AddAsync(category);
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new CategoryResponse
-            {
-                Id = category.Id,
-                Name = category.Name
-            });
+            return Ok(BaseResponse<CategoryResponse>.Ok(result));
         }
 
-        // PUT: api/categories/{id}
         [HttpPut("{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateCategory(Guid id, CategoryRequest request)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var result = await _categoryService.UpdateCategory(id, request);
 
-            if (category == null)
-            {
-                return NotFound("Category not found.");
-            }
-
-            category.Name = request.Name;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new CategoryResponse
-            {
-                Id = category.Id,
-                Name = category.Name
-            });
+            return Ok(BaseResponse<CategoryResponse>.Ok(result));
         }
 
-        // DELETE: api/categories/{id}
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            await _categoryService.DeleteCategory(id);
 
-            if (category == null)
-            {
-                return NotFound("Category not found.");
-            }
-
-            _context.Categories.Remove(category);
-
-            await _context.SaveChangesAsync();
-
-            return Ok("Category deleted successfully.");
+            return Ok(BaseResponse<string>.Ok(null, "Deleted successfully"));
         }
     }
 }

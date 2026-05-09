@@ -43,7 +43,7 @@ namespace E_commerce.Data
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
-                .WithMany()
+                .WithMany(r => r.Users)
                 .HasForeignKey(ui => ui.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -55,7 +55,7 @@ namespace E_commerce.Data
 
             modelBuilder.Entity<CartItem>()
                 .HasOne(ci => ci.ProductVariant)
-                .WithMany()
+                .WithMany(pv => pv.CartItems)
                 .HasForeignKey(c => c.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -90,13 +90,13 @@ namespace E_commerce.Data
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Voucher)
-                .WithMany()
+                .WithMany(v => v.Orders)
                 .HasForeignKey(v => v.VoucherId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Order>()
                 .HasOne(p => p.PaymentMethod)
-                .WithMany()
+                .WithMany(pm => pm.Orders)
                 .HasForeignKey(pi => pi.PaymentMethodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -108,7 +108,7 @@ namespace E_commerce.Data
 
             modelBuilder.Entity<OrderDetail>()
                 .HasOne(od => od.ProductVariant)
-                .WithMany()
+                .WithMany(pv => pv.OrderDetails)
                 .HasForeignKey(od => od.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 

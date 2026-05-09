@@ -1,38 +1,27 @@
-using E_commerce.Data;
 using E_commerce.DTOs.Review;
+using E_commerce.Helpers;
+using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.Controllers.ReviewController
 {
-    [Route("api")]
     [ApiController]
+    [Route("api/products")]
     public class ReviewController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IReviewService _reviewService;
 
-        public ReviewController(AppDbContext context)
+        public ReviewController(IReviewService reviewService)
         {
-            _context = context;
+            _reviewService = reviewService;
         }
 
-        // GET: api/products/{id}/reviews
-        [HttpGet("products/{id}/reviews")]
-        public async Task<IActionResult> GetProductReviews(Guid id)
+        [HttpGet("{id}/reviews")]
+        public async Task<IActionResult> GetReviews(Guid id)
         {
-            var reviews = await _context.Reviews
-                .Where(r => r.ProductId == id)
-                .Select(r => new ReviewResponse
-                {
-                    Id = r.Id,
-                    UserName = r.User.FullName,
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    CreatedDate = r.CreatedDate
-                })
-                .ToListAsync();
+            var result = await _reviewService.GetProductReviews(id);
 
-            return Ok(reviews);
+            return Ok(BaseResponse<List<ReviewResponse>>.Ok(result));
         }
     }
 }
