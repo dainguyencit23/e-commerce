@@ -1,19 +1,28 @@
-using System.Text;
 using E_commerce.Data;
 using E_commerce.Middlewares;
+using E_commerce.Repositories;
+using E_commerce.Repositories.Interfaces;
 using E_commerce.Services;
 using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Repositories
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+// Services
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
+
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -86,3 +95,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
