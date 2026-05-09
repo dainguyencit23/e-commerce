@@ -22,6 +22,8 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 // Services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
+builder.Services.AddScoped<IVoucherService, VoucherService>();
+builder.Services.AddScoped<IProductImageService, ProductImageService>();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;
