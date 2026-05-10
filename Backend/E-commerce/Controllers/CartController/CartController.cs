@@ -1,6 +1,7 @@
 ﻿using E_commerce.DTOs.Cart;
 using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace E_commerce.Controllers
 {
@@ -16,8 +17,6 @@ namespace E_commerce.Controllers
 
         // TEMP TEST USER ID
         // Replace after JWT login works
-        private readonly Guid _testUserId =
-            Guid.Parse("03000001-0000-0000-0000-000000000000");
 
         public CartController(ICartService cartService)
         {
@@ -28,7 +27,7 @@ namespace E_commerce.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCart()
         {
-            var userId = _testUserId;
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             var cart = await _cartService.GetCartAsync(userId);
 
@@ -42,7 +41,7 @@ namespace E_commerce.Controllers
         [HttpPost("items")]
         public async Task<IActionResult> AddItem(AddCartItem dto)
         {
-            var userId = _testUserId;
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             var result = await _cartService.AddItemAsync(userId, dto);
 
@@ -83,7 +82,7 @@ namespace E_commerce.Controllers
         [HttpDelete]
         public async Task<IActionResult> ClearCart()
         {
-            var userId = _testUserId;
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             var result = await _cartService.ClearCartAsync(userId);
 

@@ -1,15 +1,16 @@
 
 using E_commerce.DTOs.Voucher;
+using E_commerce.Helpers;
 using E_commerce.Models;
 using E_commerce.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using E_commerce.Helpers;
 
 namespace E_commerce.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/vouchers")]
     public class VoucherController : ControllerBase
     {
         private readonly IVoucherService _voucherService;
@@ -61,6 +62,7 @@ namespace E_commerce.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateVoucherAsync(CreateVoucherRequest request)
         {
             try
@@ -69,11 +71,12 @@ namespace E_commerce.Controllers
                 return Ok(BaseResponse<VoucherResponse>.Ok(voucher));
             }catch (InvalidDataException ex)
             {
-                return BadRequest(BaseResponse<VoucherResponse>.Fail(ex.Message));
+                return BadRequest(BaseResponse<string>.Fail(ex.Message));
             }
         }
 
         [HttpPatch("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult>  UpdateVoucherAsync(Guid id, UpdateVoucherRequest request)
         {
             try
@@ -88,6 +91,7 @@ namespace E_commerce.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             try
