@@ -28,11 +28,11 @@ namespace E_commerce.Controllers.RegisterController
 
             if (result.IsSuccess)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             else
             {
-                return BadRequest(result.Message);
+                return BadRequest(result);
             }
         }
     }
