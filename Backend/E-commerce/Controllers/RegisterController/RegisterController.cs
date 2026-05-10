@@ -17,7 +17,7 @@ namespace E_commerce.Controllers.RegisterController
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult> Create([FromBody] RegisterRequest dto)
+        public async Task<ActionResult> Register([FromBody] RegisterRequest dto)
         {
             if (!ModelState.IsValid)
             {
