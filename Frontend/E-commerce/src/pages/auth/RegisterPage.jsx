@@ -1,58 +1,59 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './Auth.css';
+import { Card, Form, Input, Button, Alert } from 'antd';
+import { UserOutlined, MailOutlined, PhoneOutlined, LockOutlined } from '@ant-design/icons';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [error, setError] = useState('');
+  const [form] = Form.useForm();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (form.password !== form.confirm) { setError('Mật khẩu xác nhận không khớp'); return; }
+  const handleSubmit = (values) => {
+    if (values.password !== values.confirm) {
+      setError('Mật khẩu xác nhận không khớp');
+      return;
+    }
     alert('Đăng ký thành công! (demo - chưa kết nối backend)');
     navigate('/login');
   };
 
-  const handleChange = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-logo">🛒</div>
-        <h2 className="auth-title">Tạo tài khoản</h2>
-        <p className="auth-subtitle">Đăng ký để mua sắm dễ dàng hơn</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+      <Card className="w-full max-w-[420px] shadow-xl rounded-2xl">
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-3">🛒</div>
+          <h2 className="text-2xl font-bold text-gray-800">Tạo tài khoản</h2>
+          <p className="text-gray-500 mt-1">Đăng ký để mua sắm dễ dàng hơn</p>
+        </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && <Alert message={error} type="error" showIcon className="mb-4" />}
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label className="form-label">Họ và tên</label>
-            <input name="name" className="form-control" placeholder="Nguyễn Văn A" value={form.name} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <input name="email" type="email" className="form-control" placeholder="email@example.com" value={form.email} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Số điện thoại</label>
-            <input name="phone" className="form-control" placeholder="09xxxxxxxx" value={form.phone} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Mật khẩu</label>
-            <input name="password" type="password" className="form-control" placeholder="Tối thiểu 6 ký tự" value={form.password} onChange={handleChange} required minLength={6} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Xác nhận mật khẩu</label>
-            <input name="confirm" type="password" className="form-control" placeholder="Nhập lại mật khẩu" value={form.confirm} onChange={handleChange} required />
-          </div>
-          <button type="submit" className="btn btn-primary w-full btn-lg">Đăng ký</button>
-        </form>
+        <Form form={form} layout="vertical" onFinish={handleSubmit} size="large">
+          <Form.Item label="Họ và tên" name="name" rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}>
+            <Input prefix={<UserOutlined />} placeholder="Nguyễn Văn A" />
+          </Form.Item>
+          <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Vui lòng nhập email' }, { type: 'email', message: 'Email không hợp lệ' }]}>
+            <Input prefix={<MailOutlined />} placeholder="email@example.com" />
+          </Form.Item>
+          <Form.Item label="Số điện thoại" name="phone" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
+            <Input prefix={<PhoneOutlined />} placeholder="09xxxxxxxx" />
+          </Form.Item>
+          <Form.Item label="Mật khẩu" name="password" rules={[{ required: true, min: 6, message: 'Mật khẩu tối thiểu 6 ký tự' }]}>
+            <Input.Password prefix={<LockOutlined />} placeholder="Tối thiểu 6 ký tự" />
+          </Form.Item>
+          <Form.Item label="Xác nhận mật khẩu" name="confirm" rules={[{ required: true, message: 'Vui lòng xác nhận mật khẩu' }]}>
+            <Input.Password prefix={<LockOutlined />} placeholder="Nhập lại mật khẩu" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block className="h-11 font-semibold">
+            Đăng ký
+          </Button>
+        </Form>
 
-        <p className="auth-footer">
-          Đã có tài khoản? <Link to="/login" className="text-primary font-semibold">Đăng nhập</Link>
+        <p className="text-center text-sm text-gray-500 mt-4">
+          Đã có tài khoản?{' '}
+          <Link to="/login" className="text-blue-600 font-semibold hover:underline">Đăng nhập</Link>
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useState } from 'react';
+import { Card, Switch, Tag } from 'antd';
 import { paymentMethods as initMethods } from '../../data/mockData';
-import './AdminPage.css';
-import './PaymentMethodPage.css';
 
 export default function PaymentMethodPage() {
   const [methods, setMethods] = useState(initMethods);
@@ -9,24 +8,23 @@ export default function PaymentMethodPage() {
   const toggle = (id) => setMethods(l => l.map(m => m.id === id ? { ...m, enabled: !m.enabled } : m));
 
   return (
-    <div className="admin-page">
-      <p className="text-sm text-gray mb-4">Quản lý các phương thức thanh toán hiển thị cho khách hàng.</p>
-      <div className="payment-method-list">
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-gray-500">Quản lý các phương thức thanh toán hiển thị cho khách hàng.</p>
+      <div className="flex flex-col gap-3">
         {methods.map(m => (
-          <div key={m.id} className="card payment-method-card">
-            <div className="pm-icon">{m.icon}</div>
-            <div className="pm-info">
-              <p className="font-semibold">{m.name}</p>
-              <p className="text-sm text-gray">{m.description}</p>
+          <Card key={m.id} size="small">
+            <div className="flex items-center gap-4">
+              <span className="text-3xl flex-shrink-0">{m.icon}</span>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-800">{m.name}</p>
+                <p className="text-sm text-gray-500">{m.description}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Tag color={m.enabled ? 'green' : 'default'}>{m.enabled ? 'Đang hoạt động' : 'Tắt'}</Tag>
+                <Switch checked={m.enabled} onChange={() => toggle(m.id)} />
+              </div>
             </div>
-            <div className="pm-toggle">
-              <span className={`badge ${m.enabled ? 'badge-green' : 'badge-gray'}`}>{m.enabled ? 'Đang hoạt động' : 'Tắt'}</span>
-              <label className="toggle-switch">
-                <input type="checkbox" checked={m.enabled} onChange={() => toggle(m.id)} />
-                <span className="toggle-slider" />
-              </label>
-            </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

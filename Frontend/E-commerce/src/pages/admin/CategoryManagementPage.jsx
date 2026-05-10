@@ -1,84 +1,69 @@
 import { useState } from 'react';
+import { Table, Button, Modal, Form, Input, Space } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { categories as initCats } from '../../data/mockData';
-import './AdminPage.css';
 
 export default function CategoryManagementPage() {
   const [catList, setCatList] = useState(initCats);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', slug: '' });
+  const [form] = Form.useForm();
 
-  const openAdd = () => { setEditing(null); setForm({ name: '', slug: '' }); setShowModal(true); };
-  const openEdit = (c) => { setEditing(c.id); setForm({ name: c.name, slug: c.slug }); setShowModal(true); };
-  const handleDelete = (id) => { if (confirm('Xóa danh mục này?')) setCatList(l => l.filter(c => c.id !== id)); };
+  const openAdd = () => { setEditing(null); form.resetFields(); setShowModal(true); };
+  const openEdit = (c) => { setEditing(c.id); form.setFieldsValue({ name: c.name, slug: c.slug }); setShowModal(true); };
 
-  const handleSave = (e) => {
-    e.preventDefault();
+  const handleDelete = (id) => {
+    Modal.confirm({ title: 'Xóa danh mục này?', onOk: () => setCatList(l => l.filter(c => c.id !== id)), okButtonProps: { danger: true } });
+  };
+
+  const handleSave = (values) => {
     if (editing) {
-      setCatList(l => l.map(c => c.id === editing ? { ...c, ...form } : c));
+      setCatList(l => l.map(c => c.id === editing ? { ...c, ...values } : c));
     } else {
-      setCatList(l => [...l, { id: Date.now(), ...form, parentId: null, productCount: 0 }]);
+      setCatList(l => [...l, { id: Date.now(), ...values, parentId: null, productCount: 0 }]);
     }
     setShowModal(false);
   };
 
+  const columns = [
+    { title: '#', dataIndex: 'id', key: 'id', width: 60, render: v => <span className="text-gray-400">{v}</span> },
+    { title: 'Tên danh mục', dataIndex: 'name', key: 'name', render: v => <span className="font-medium">{v}</span> },
+    { title: 'Slug', dataIndex: 'slug', key: 'slug', render: v => <span className="text-xs text-gray-500 font-mono">{v}</span> },
+    { title: 'Số sản phẩm', dataIndex: 'productCount', key: 'count' },
+    { title: 'Thao tác', key: 'action', render: (_, r) => (
+      <Space>
+        <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(r)}>Sửa</Button>
+        <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r.id)}>Xóa</Button>
+      </Space>
+    )},
+  ];
+
   return (
-    <div className="admin-page">
-      <div className="admin-toolbar">
-        <span className="text-sm text-gray">Tổng <strong>{catList.length}</strong> danh mục</span>
-        <button className="btn btn-primary" onClick={openAdd}>+ Thêm danh mục</button>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">Tổng <strong>{catList.length}</strong> danh mục</span>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>Thêm danh mục</Button>
       </div>
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="table">
-            <thead><tr><th>#</th><th>Tên danh mục</th><th>Slug</th><th>Số sản phẩm</th><th>Thao tác</th></tr></thead>
-            <tbody>
-              {catList.map(c => (
-                <tr key={c.id}>
-                  <td className="text-gray">{c.id}</td>
-                  <td className="font-medium">{c.name}</td>
-                  <td className="text-gray text-sm">{c.slug}</td>
-                  <td>{c.productCount}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => openEdit(c)}>Sửa</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Xóa</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Table columns={columns} dataSource={catList} rowKey="id" size="small" pagination={{ pageSize: 10 }} />
 
-      {showModal && (
-        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="font-semibold">{editing ? 'Sửa danh mục' : 'Thêm danh mục'}</span>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
-            </div>
-            <form onSubmit={handleSave}>
-              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div className="form-group">
-                  <label className="form-label">Tên danh mục *</label>
-                  <input className="form-control" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value, slug: e.target.value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/\s+/g,'-') }))} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Slug</label>
-                  <input className="form-control" value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button>
-                <button type="submit" className="btn btn-primary">{editing ? 'Lưu' : 'Thêm'}</button>
-              </div>
-            </form>
+      <Modal
+        title={editing ? 'Sửa danh mục' : 'Thêm danh mục'}
+        open={showModal}
+        onCancel={() => setShowModal(false)}
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSave} className="mt-4">
+          <Form.Item label="Tên danh mục *" name="name" rules={[{ required: true }]}>
+            <Input onChange={e => form.setFieldValue('slug', e.target.value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/\s+/g,'-'))} />
+          </Form.Item>
+          <Form.Item label="Slug" name="slug"><Input /></Form.Item>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setShowModal(false)}>Hủy</Button>
+            <Button type="primary" htmlType="submit">{editing ? 'Lưu' : 'Thêm'}</Button>
           </div>
-        </div>
-      )}
+        </Form>
+      </Modal>
     </div>
   );
 }

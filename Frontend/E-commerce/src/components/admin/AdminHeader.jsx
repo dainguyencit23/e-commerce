@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router-dom';
-import './AdminHeader.css';
 
 const TITLE_MAP = {
   '/admin/dashboard': 'Dashboard',
@@ -20,11 +19,11 @@ export default function AdminHeader() {
   const { pathname } = useLocation();
   const title = TITLE_MAP[pathname] || 'Admin';
   return (
-    <header className="admin-header">
-      <h1 className="admin-header-title">{title}</h1>
-      <div className="admin-header-right">
-        <span className="text-sm text-gray">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-      </div>
+    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 flex items-center justify-between px-6 h-16">
+      <h1 className="text-xl font-bold text-gray-800">{title}</h1>
+      <span className="text-sm text-gray-500">
+        {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      </span>
     </header>
   );
 }

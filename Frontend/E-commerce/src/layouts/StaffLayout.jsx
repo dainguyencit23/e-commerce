@@ -2,20 +2,19 @@ import { Outlet, Navigate } from 'react-router-dom';
 import StaffSidebar from '../components/staff/StaffSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
 import { useAuth } from '../context/AuthContext';
-import './AdminLayout.css';
 
 export default function StaffLayout() {
   const { user } = useAuth();
   if (!user || (user.role !== 'staff' && user.role !== 'admin')) return <Navigate to="/login" replace />;
 
   return (
-    <div className="admin-layout">
+    <div className="flex min-h-screen bg-gray-50">
       <StaffSidebar />
-      <div className="admin-main">
+      <div className="flex-1 flex flex-col ml-60">
         <AdminHeader />
-        <div className="admin-content">
+        <main className="flex-1 p-6 overflow-y-auto">
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   );

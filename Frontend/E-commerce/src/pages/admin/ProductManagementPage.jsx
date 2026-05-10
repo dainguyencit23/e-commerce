@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { Table, Button, Modal, Form, Input, Select, Tag, Space, InputNumber } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { categories, formatPrice } from '../../data/mockData';
 import { useProducts } from '../../context/ProductContext';
-import './AdminPage.css';
 
-const emptyForm = () => ({ name: '', brand: '', categoryId: '', basePrice: '', stock: '', description: '' });
 const emptyVariant = () => ({ id: Date.now() + Math.random(), label: '', price: '', stock: '' });
 
 export default function ProductManagementPage() {
@@ -12,8 +12,8 @@ export default function ProductManagementPage() {
   const [catFilter, setCatFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(emptyForm());
-  const [variants, setVariants] = useState([]);
+  const [variants, setVariants] = useState([emptyVariant()]);
+  const [form] = Form.useForm();
 
   const filtered = productList.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.brand.toLowerCase().includes(search.toLowerCase());
@@ -23,44 +23,33 @@ export default function ProductManagementPage() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm(emptyForm());
+    form.resetFields();
     setVariants([emptyVariant()]);
     setShowModal(true);
   };
 
   const openEdit = (p) => {
     setEditing(p.id);
-    setForm({ name: p.name, brand: p.brand, categoryId: p.categoryId, basePrice: p.basePrice, stock: p.stock, description: p.description });
+    form.setFieldsValue({ name: p.name, brand: p.brand, categoryId: p.categoryId, basePrice: p.basePrice, stock: p.stock, description: p.description });
     setVariants(p.variants.length > 0 ? p.variants.map(v => ({ ...v })) : [emptyVariant()]);
     setShowModal(true);
   };
 
-  const handleDelete = (id) => { if (confirm('Xóa sản phẩm này?')) deleteProduct(id); };
+  const handleDelete = (id) => {
+    Modal.confirm({ title: 'Xóa sản phẩm này?', onOk: () => deleteProduct(id), okButtonProps: { danger: true } });
+  };
 
-  // Variant helpers
-  const addVariant = () => setVariants(v => [...v, emptyVariant()]);
-  const removeVariant = (id) => setVariants(v => v.filter(vt => vt.id !== id));
-  const updateVariant = (id, field, value) => setVariants(v => v.map(vt => vt.id === id ? { ...vt, [field]: value } : vt));
-
-  const handleSave = (e) => {
-    e.preventDefault();
-    const cleanVariants = variants
-      .filter(v => v.label.trim())
-      .map(v => ({ ...v, price: Number(v.price) || Number(form.basePrice), stock: Number(v.stock) || 0 }));
-
+  const handleSave = (values) => {
+    const cleanVariants = variants.filter(v => v.label.trim()).map(v => ({ ...v, price: Number(v.price) || Number(values.basePrice), stock: Number(v.stock) || 0 }));
     if (editing) {
-      updateProduct(editing, { ...form, categoryId: Number(form.categoryId), basePrice: Number(form.basePrice), stock: Number(form.stock), variants: cleanVariants });
+      updateProduct(editing, { ...values, categoryId: Number(values.categoryId), basePrice: Number(values.basePrice), stock: Number(values.stock), variants: cleanVariants });
     } else {
       addProduct({
-        id: Date.now(),
-        ...form,
-        categoryId: Number(form.categoryId),
-        basePrice: Number(form.basePrice),
-        stock: Number(form.stock),
-        thumbnail: `https://placehold.co/400x400?text=${encodeURIComponent(form.name)}`,
-        variants: cleanVariants,
-        rating: 0, reviewCount: 0, featured: false, images: [],
-        slug: form.name.toLowerCase().replace(/\s+/g, '-'),
+        id: Date.now(), ...values,
+        categoryId: Number(values.categoryId), basePrice: Number(values.basePrice), stock: Number(values.stock),
+        thumbnail: `https://placehold.co/400x400?text=${encodeURIComponent(values.name)}`,
+        variants: cleanVariants, rating: 0, reviewCount: 0, featured: false, images: [],
+        slug: values.name.toLowerCase().replace(/\s+/g, '-'),
       });
     }
     setShowModal(false);
@@ -68,160 +57,91 @@ export default function ProductManagementPage() {
 
   const getCatName = (id) => categories.find(c => c.id === id)?.name || '—';
 
+  const columns = [
+    { title: '#', dataIndex: 'id', key: 'id', width: 60, render: v => <span className="text-xs text-gray-400">{v}</span> },
+    { title: 'Sản phẩm', key: 'product', render: (_, r) => (
+      <div className="flex items-center gap-2.5">
+        <img src={r.thumbnail} alt={r.name} className="w-10 h-10 rounded object-cover bg-gray-100" />
+        <span className="font-medium">{r.name}</span>
+      </div>
+    )},
+    { title: 'Danh mục', key: 'cat', render: (_, r) => getCatName(r.categoryId) },
+    { title: 'Thương hiệu', dataIndex: 'brand', key: 'brand' },
+    { title: 'Giá', dataIndex: 'basePrice', key: 'price', render: v => <span className="font-semibold">{formatPrice(v)}</span> },
+    { title: 'Kho', dataIndex: 'stock', key: 'stock' },
+    { title: 'Biến thể', key: 'variants', render: (_, r) => <Tag color="blue">{r.variants.length} biến thể</Tag> },
+    { title: 'Đánh giá', key: 'rating', render: (_, r) => <span>⭐ {r.rating} ({r.reviewCount})</span> },
+    { title: 'Thao tác', key: 'action', render: (_, r) => (
+      <Space>
+        <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(r)}>Sửa</Button>
+        <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r.id)}>Xóa</Button>
+      </Space>
+    )},
+  ];
+
   return (
-    <div className="admin-page">
-      {/* Toolbar */}
-      <div className="admin-toolbar">
-        <div className="search-bar">
-          <span className="search-bar-icon">🔍</span>
-          <input className="form-control" placeholder="Tìm sản phẩm..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <select className="form-control" style={{ width: 180 }} value={catFilter} onChange={e => setCatFilter(e.target.value)}>
-          <option value="">Tất cả danh mục</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <button className="btn btn-primary" onClick={openAdd}>+ Thêm sản phẩm</button>
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-3 flex-wrap">
+        <Input prefix={<SearchOutlined />} placeholder="Tìm sản phẩm..." value={search} onChange={e => setSearch(e.target.value)} className="w-64" />
+        <Select placeholder="Tất cả danh mục" value={catFilter || undefined} onChange={v => setCatFilter(v || '')} allowClear className="w-48">
+          {categories.map(c => <Select.Option key={c.id} value={String(c.id)}>{c.name}</Select.Option>)}
+        </Select>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>Thêm sản phẩm</Button>
       </div>
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr><th>#</th><th>Sản phẩm</th><th>Danh mục</th><th>Thương hiệu</th><th>Giá</th><th>Kho</th><th>Biến thể</th><th>Đánh giá</th><th>Thao tác</th></tr>
-            </thead>
-            <tbody>
-              {filtered.map(p => (
-                <tr key={p.id}>
-                  <td className="text-gray text-sm">{p.id}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <img src={p.thumbnail} alt={p.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover', background: 'var(--gray-100)' }} />
-                      <span className="font-medium">{p.name}</span>
-                    </div>
-                  </td>
-                  <td>{getCatName(p.categoryId)}</td>
-                  <td>{p.brand}</td>
-                  <td className="font-semibold">{formatPrice(p.basePrice)}</td>
-                  <td>{p.stock}</td>
-                  <td><span className="badge badge-blue">{p.variants.length} biến thể</span></td>
-                  <td>⭐ {p.rating} ({p.reviewCount})</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => openEdit(p)}>Sửa</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>Xóa</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length === 0 && <div className="empty-state"><div className="empty-state-icon">📦</div><p>Không có sản phẩm nào</p></div>}
-      </div>
+      <Table columns={columns} dataSource={filtered} rowKey="id" scroll={{ x: true }} size="small"
+        pagination={{ pageSize: 10 }}
+        locale={{ emptyText: '📦 Không có sản phẩm nào' }}
+      />
 
-      {/* Modal */}
-      {showModal && (
-        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxWidth: 720 }}>
-            <div className="modal-header">
-              <span className="font-semibold">{editing ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</span>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
-            </div>
-            <form onSubmit={handleSave}>
-              <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-
-                {/* Thông tin cơ bản */}
-                <p className="font-semibold text-sm" style={{ marginBottom: 10, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Thông tin sản phẩm</p>
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Tên sản phẩm *</label>
-                    <input className="form-control" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Thương hiệu *</label>
-                    <input className="form-control" value={form.brand} onChange={e => setForm(p => ({ ...p, brand: e.target.value }))} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Danh mục *</label>
-                    <select className="form-control" value={form.categoryId} onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))} required>
-                      <option value="">Chọn danh mục</option>
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Giá cơ bản (VND) *</label>
-                    <input className="form-control" type="number" value={form.basePrice} onChange={e => setForm(p => ({ ...p, basePrice: e.target.value }))} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Tồn kho tổng</label>
-                    <input className="form-control" type="number" value={form.stock} onChange={e => setForm(p => ({ ...p, stock: e.target.value }))} />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                    <label className="form-label">Mô tả</label>
-                    <textarea className="form-control" rows={3} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
-                  </div>
-                </div>
-
-                {/* Variants */}
-                <div style={{ borderTop: '1px solid var(--gray-100)', marginTop: 20, paddingTop: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <p className="font-semibold text-sm" style={{ color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Biến thể ({variants.length})
-                    </p>
-                    <button type="button" className="btn btn-sm btn-secondary" onClick={addVariant}>+ Thêm biến thể</button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {/* Header row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px 100px 36px', gap: 8 }}>
-                      <span className="text-sm text-gray">Tên biến thể (vd: 128GB - Đen)</span>
-                      <span className="text-sm text-gray">Giá (VND)</span>
-                      <span className="text-sm text-gray">Kho</span>
-                      <span />
-                    </div>
-
-                    {variants.map((v, idx) => (
-                      <div key={v.id} style={{ display: 'grid', gridTemplateColumns: '1fr 140px 100px 36px', gap: 8, alignItems: 'center' }}>
-                        <input
-                          className="form-control"
-                          placeholder={`Biến thể ${idx + 1}`}
-                          value={v.label}
-                          onChange={e => updateVariant(v.id, 'label', e.target.value)}
-                        />
-                        <input
-                          className="form-control"
-                          type="number"
-                          placeholder="Giá"
-                          value={v.price}
-                          onChange={e => updateVariant(v.id, 'price', e.target.value)}
-                        />
-                        <input
-                          className="form-control"
-                          type="number"
-                          placeholder="Kho"
-                          value={v.stock}
-                          onChange={e => updateVariant(v.id, 'stock', e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeVariant(v.id)}
-                          disabled={variants.length === 1}
-                          style={{ background: 'none', color: 'var(--danger)', fontSize: 18, padding: 0, cursor: variants.length === 1 ? 'not-allowed' : 'pointer', opacity: variants.length === 1 ? 0.3 : 1 }}
-                        >✕</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button>
-                <button type="submit" className="btn btn-primary">{editing ? 'Lưu thay đổi' : 'Thêm sản phẩm'}</button>
-              </div>
-            </form>
+      <Modal
+        title={editing ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
+        open={showModal}
+        onCancel={() => setShowModal(false)}
+        footer={null}
+        width={720}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSave}>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Form.Item label="Tên sản phẩm *" name="name" rules={[{ required: true }]}><Input /></Form.Item>
+            <Form.Item label="Thương hiệu *" name="brand" rules={[{ required: true }]}><Input /></Form.Item>
+            <Form.Item label="Danh mục *" name="categoryId" rules={[{ required: true }]}>
+              <Select placeholder="Chọn danh mục">
+                {categories.map(c => <Select.Option key={c.id} value={c.id}>{c.name}</Select.Option>)}
+              </Select>
+            </Form.Item>
+            <Form.Item label="Giá cơ bản (VND) *" name="basePrice" rules={[{ required: true }]}><InputNumber className="w-full" /></Form.Item>
+            <Form.Item label="Tồn kho tổng" name="stock"><InputNumber className="w-full" /></Form.Item>
+            <Form.Item label="Mô tả" name="description" className="col-span-2"><Input.TextArea rows={2} /></Form.Item>
           </div>
-        </div>
-      )}
+
+          <div className="border-t border-gray-100 pt-4 mt-2">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase">Biến thể ({variants.length})</p>
+              <Button size="small" onClick={() => setVariants(v => [...v, emptyVariant()])}>+ Thêm biến thể</Button>
+            </div>
+            <div className="grid grid-cols-[1fr_140px_100px_32px] gap-2 mb-2">
+              <span className="text-xs text-gray-400">Tên biến thể</span>
+              <span className="text-xs text-gray-400">Giá (VND)</span>
+              <span className="text-xs text-gray-400">Kho</span>
+              <span />
+            </div>
+            {variants.map((v, idx) => (
+              <div key={v.id} className="grid grid-cols-[1fr_140px_100px_32px] gap-2 mb-2 items-center">
+                <Input placeholder={`Biến thể ${idx+1}`} value={v.label} onChange={e => setVariants(vl => vl.map(vt => vt.id === v.id ? { ...vt, label: e.target.value } : vt))} size="small" />
+                <InputNumber placeholder="Giá" value={v.price} onChange={val => setVariants(vl => vl.map(vt => vt.id === v.id ? { ...vt, price: val } : vt))} size="small" className="w-full" />
+                <InputNumber placeholder="Kho" value={v.stock} onChange={val => setVariants(vl => vl.map(vt => vt.id === v.id ? { ...vt, stock: val } : vt))} size="small" className="w-full" />
+                <Button size="small" danger type="text" disabled={variants.length === 1} onClick={() => setVariants(vl => vl.filter(vt => vt.id !== v.id))}>✕</Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
+            <Button onClick={() => setShowModal(false)}>Hủy</Button>
+            <Button type="primary" htmlType="submit">{editing ? 'Lưu thay đổi' : 'Thêm sản phẩm'}</Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 }
