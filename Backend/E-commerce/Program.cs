@@ -3,6 +3,7 @@ using E_commerce.Middlewares;
 using E_commerce.Repositories;
 using E_commerce.Repositories.Interfaces;
 using E_commerce.Services;
+using E_commerce.Services.Implementations;
 using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,7 @@ builder.Services.AddScoped<IProductService, ProductService>();S
 builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegisterService, RegisterService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
