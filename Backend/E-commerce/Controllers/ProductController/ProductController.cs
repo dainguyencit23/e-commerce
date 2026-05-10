@@ -40,7 +40,7 @@ namespace E_commerce.Controllers
         }
 
         [HttpPost]
-        // [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
         {
             if (!ModelState.IsValid)
@@ -51,7 +51,7 @@ namespace E_commerce.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        //[Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
         {
             if (!ModelState.IsValid)
@@ -69,7 +69,7 @@ namespace E_commerce.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
