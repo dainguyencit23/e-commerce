@@ -14,7 +14,7 @@ namespace E_commerce.Models
         [Required(ErrorMessage = "Email is required."), StringLength(100),EmailAddress]
         public string Email { get; set; }
         [StringLength(100)]
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
         [StringLength(10)]
         public string PhoneNumber { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
