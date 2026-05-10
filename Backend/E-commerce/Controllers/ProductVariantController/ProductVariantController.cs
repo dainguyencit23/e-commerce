@@ -2,11 +2,12 @@ using E_commerce.DTOs.Variant;
 using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using E_commerce.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace E_commerce.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api")]
     public class ProductVariantController : ControllerBase
     {
         private readonly IProductVariantService _variantService;
@@ -14,8 +15,9 @@ namespace E_commerce.Controllers
         {
             _variantService = variantService;
         }
-
-        [HttpPost]
+        // Thêm cái get variants của 1 products
+        [HttpPost("products/{id}/variants")]
+        [Authorize(Roles ="Admin, Staff")]
         public async Task<IActionResult> AddVariant(Guid id, CreateVariantRequest request)
         {
             try
@@ -29,8 +31,8 @@ namespace E_commerce.Controllers
             }
         }
 
-        // PUT api/variants/{id}
-        [HttpPut("{id}")]
+        [HttpPut("variants/{id}")]
+        [Authorize(Roles = "Admin, Staff")]
         public async Task<IActionResult> UpdateVariant(Guid id, UpdateVariantRequest request)
         {
             try
@@ -44,8 +46,8 @@ namespace E_commerce.Controllers
             }
         }
 
-        // DELETE api/variants/{id}
-        [HttpDelete("{id}")]
+        [HttpDelete("variants/{id}")]
+        [Authorize(Roles = "Admin, Staff")]
         public async Task<IActionResult> DeleteVariant(Guid id)
         {
             try
