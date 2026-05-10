@@ -1,12 +1,14 @@
-using System.Text;
 using E_commerce.Data;
 using E_commerce.Middlewares;
+using E_commerce.Repositories;
+using E_commerce.Repositories.Interfaces;
 using E_commerce.Services;
 using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Interface
+// Repositories
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+// Services
+builder.Services.AddScoped<IProductService, ProductService>();S
 builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
@@ -94,3 +100,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
