@@ -17,7 +17,7 @@ namespace E_commerce.Controllers
         }
         // Thêm cái get variants của 1 products
         [HttpPost("products/{id}/variants")]
-        [Authorize(Roles ="Admin, Staff")]
+        [Authorize(Roles ="Admin,Staff")]
         public async Task<IActionResult> AddVariant(Guid id, CreateVariantRequest request)
         {
             try
@@ -32,7 +32,7 @@ namespace E_commerce.Controllers
         }
 
         [HttpPut("variants/{id}")]
-        [Authorize(Roles = "Admin, Staff")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> UpdateVariant(Guid id, UpdateVariantRequest request)
         {
             try
@@ -47,7 +47,7 @@ namespace E_commerce.Controllers
         }
 
         [HttpDelete("variants/{id}")]
-        [Authorize(Roles = "Admin, Staff")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> DeleteVariant(Guid id)
         {
             try

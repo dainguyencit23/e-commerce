@@ -1,11 +1,12 @@
 ﻿using E_commerce.DTOs.Cart;
 using E_commerce.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace E_commerce.Controllers
 {
-    // [Authorize]
+    [Authorize]
     // TEMP: Disable Authorize because Login API is not working yet
     // TODO: Restore [Authorize] after JWT/Auth is fixed
 

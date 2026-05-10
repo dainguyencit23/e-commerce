@@ -23,7 +23,7 @@ namespace E_commerce.Controllers
         {
             try
             {
-                _productImageService.AddImageAsync(id, request);
+                await _productImageService.AddImageAsync(id, request);
                 return Ok(BaseResponse<string>.Ok(string.Empty, "Add URL image successfully."));
             }catch (KeyNotFoundException ex)
             {
@@ -38,7 +38,7 @@ namespace E_commerce.Controllers
         {
             try
             {
-                _productImageService.DeleteImageAsync(id);
+               await _productImageService.DeleteImageAsync(id);
                 return Ok(BaseResponse<string>.Ok(string.Empty, "Delete URL image successfully."));
             }
             catch (KeyNotFoundException ex)
