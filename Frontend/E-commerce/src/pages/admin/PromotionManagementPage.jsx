@@ -1,125 +1,101 @@
 import { useState } from 'react';
+import { Table, Button, Tag, Modal, Form, Input, Select, InputNumber, Space, DatePicker } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { promotions as initPromos, PROMOTION_STATUS_LABEL, formatPrice } from '../../data/mockData';
-import './AdminPage.css';
-import './PromotionManagementPage.css';
 
-const STATUS_BADGE = { active: 'badge-green', expired: 'badge-gray', upcoming: 'badge-blue' };
+const STATUS_COLOR = { active: 'green', expired: 'default', upcoming: 'blue' };
 
 export default function PromotionManagementPage() {
   const [promoList, setPromoList] = useState(initPromos);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ code: '', type: 'percent', value: '', minOrderValue: '', maxDiscount: '', usageLimit: '', startDate: '', endDate: '', description: '' });
+  const [form] = Form.useForm();
 
-  const openAdd = () => { setEditing(null); setForm({ code: '', type: 'percent', value: '', minOrderValue: '', maxDiscount: '', usageLimit: '', startDate: '', endDate: '', description: '' }); setShowModal(true); };
-  const openEdit = (p) => { setEditing(p.id); setForm({ code: p.code, type: p.type, value: p.value, minOrderValue: p.minOrderValue, maxDiscount: p.maxDiscount, usageLimit: p.usageLimit, startDate: p.startDate, endDate: p.endDate, description: p.description }); setShowModal(true); };
-  const handleDelete = (id) => { if (confirm('Xóa mã giảm giá này?')) setPromoList(l => l.filter(p => p.id !== id)); };
+  const openAdd = () => { setEditing(null); form.resetFields(); setShowModal(true); };
+  const openEdit = (p) => {
+    setEditing(p.id);
+    form.setFieldsValue({ ...p, startDate: dayjs(p.startDate), endDate: dayjs(p.endDate) });
+    setShowModal(true);
+  };
 
-  const handleSave = (e) => {
-    e.preventDefault();
+  const handleDelete = (id) => {
+    Modal.confirm({ title: 'Xóa mã giảm giá này?', onOk: () => setPromoList(l => l.filter(p => p.id !== id)), okButtonProps: { danger: true } });
+  };
+
+  const handleSave = (values) => {
+    const startDate = values.startDate.format('YYYY-MM-DD');
+    const endDate = values.endDate.format('YYYY-MM-DD');
     const today = new Date().toISOString().slice(0,10);
-    const status = form.endDate < today ? 'expired' : form.startDate > today ? 'upcoming' : 'active';
+    const status = endDate < today ? 'expired' : startDate > today ? 'upcoming' : 'active';
+    const data = { ...values, startDate, endDate, status };
     if (editing) {
-      setPromoList(l => l.map(p => p.id === editing ? { ...p, ...form, value: Number(form.value), minOrderValue: Number(form.minOrderValue), maxDiscount: Number(form.maxDiscount), usageLimit: Number(form.usageLimit), status } : p));
+      setPromoList(l => l.map(p => p.id === editing ? { ...p, ...data } : p));
     } else {
-      setPromoList(l => [...l, { id: Date.now(), ...form, value: Number(form.value), minOrderValue: Number(form.minOrderValue), maxDiscount: Number(form.maxDiscount), usageLimit: Number(form.usageLimit), usedCount: 0, status }]);
+      setPromoList(l => [...l, { id: Date.now(), ...data, usedCount: 0 }]);
     }
     setShowModal(false);
   };
 
+  const columns = [
+    { title: 'Mã', dataIndex: 'code', key: 'code', render: v => (
+      <span className="font-mono bg-gray-100 text-blue-600 font-bold px-2 py-0.5 rounded text-sm">{v}</span>
+    )},
+    { title: 'Loại', dataIndex: 'type', key: 'type', render: v => v === 'percent' ? 'Phần trăm' : 'Cố định' },
+    { title: 'Giá trị', key: 'value', render: (_, r) => <span className="font-semibold">{r.type === 'percent' ? `${r.value}%` : formatPrice(r.value)}</span> },
+    { title: 'Đơn tối thiểu', dataIndex: 'minOrderValue', key: 'min', render: v => <span className="text-sm">{formatPrice(v)}</span> },
+    { title: 'Đã dùng', key: 'used', render: (_, r) => <span className="text-sm">{r.usedCount}/{r.usageLimit}</span> },
+    { title: 'Hiệu lực', key: 'dates', render: (_, r) => <span className="text-xs text-gray-500">{r.startDate} → {r.endDate}</span> },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: v => <Tag color={STATUS_COLOR[v]}>{PROMOTION_STATUS_LABEL[v]}</Tag> },
+    { title: 'Thao tác', key: 'action', render: (_, r) => (
+      <Space>
+        <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(r)}>Sửa</Button>
+        <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r.id)}>Xóa</Button>
+      </Space>
+    )},
+  ];
+
   return (
-    <div className="admin-page">
-      <div className="admin-toolbar">
-        <span className="text-sm text-gray">Tổng <strong>{promoList.length}</strong> mã</span>
-        <button className="btn btn-primary" onClick={openAdd}>+ Tạo mã giảm giá</button>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">Tổng <strong>{promoList.length}</strong> mã</span>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>Tạo mã giảm giá</Button>
       </div>
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="table">
-            <thead><tr><th>Mã</th><th>Loại</th><th>Giá trị</th><th>Đơn tối thiểu</th><th>Đã dùng</th><th>Hiệu lực</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-            <tbody>
-              {promoList.map(p => (
-                <tr key={p.id}>
-                  <td><span className="promo-code-badge">{p.code}</span></td>
-                  <td>{p.type === 'percent' ? 'Phần trăm' : 'Cố định'}</td>
-                  <td className="font-semibold">{p.type === 'percent' ? `${p.value}%` : formatPrice(p.value)}</td>
-                  <td className="text-sm">{formatPrice(p.minOrderValue)}</td>
-                  <td className="text-sm">{p.usedCount}/{p.usageLimit}</td>
-                  <td className="text-sm text-gray">{p.startDate} → {p.endDate}</td>
-                  <td><span className={`badge ${STATUS_BADGE[p.status]}`}>{PROMOTION_STATUS_LABEL[p.status]}</span></td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => openEdit(p)}>Sửa</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>Xóa</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Table columns={columns} dataSource={promoList} rowKey="id" scroll={{ x: true }} size="small" pagination={{ pageSize: 10 }} />
 
-      {showModal && (
-        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="font-semibold">{editing ? 'Sửa mã giảm giá' : 'Tạo mã giảm giá mới'}</span>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
-            </div>
-            <form onSubmit={handleSave}>
-              <div className="modal-body">
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Mã giảm giá *</label>
-                    <input className="form-control" value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} style={{ textTransform: 'uppercase' }} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Loại *</label>
-                    <select className="form-control" value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}>
-                      <option value="percent">Phần trăm (%)</option>
-                      <option value="fixed">Cố định (VND)</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Giá trị *</label>
-                    <input className="form-control" type="number" value={form.value} onChange={e => setForm(p => ({ ...p, value: e.target.value }))} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Giảm tối đa (VND)</label>
-                    <input className="form-control" type="number" value={form.maxDiscount} onChange={e => setForm(p => ({ ...p, maxDiscount: e.target.value }))} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Đơn tối thiểu (VND)</label>
-                    <input className="form-control" type="number" value={form.minOrderValue} onChange={e => setForm(p => ({ ...p, minOrderValue: e.target.value }))} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Giới hạn sử dụng</label>
-                    <input className="form-control" type="number" value={form.usageLimit} onChange={e => setForm(p => ({ ...p, usageLimit: e.target.value }))} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Ngày bắt đầu *</label>
-                    <input className="form-control" type="date" value={form.startDate} onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Ngày kết thúc *</label>
-                    <input className="form-control" type="date" value={form.endDate} onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))} required />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                    <label className="form-label">Mô tả</label>
-                    <input className="form-control" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button>
-                <button type="submit" className="btn btn-primary">{editing ? 'Lưu thay đổi' : 'Tạo mã'}</button>
-              </div>
-            </form>
+      <Modal
+        title={editing ? 'Sửa mã giảm giá' : 'Tạo mã giảm giá mới'}
+        open={showModal}
+        onCancel={() => setShowModal(false)}
+        footer={null}
+        width={640}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSave} className="mt-4">
+          <div className="grid grid-cols-2 gap-x-4">
+            <Form.Item label="Mã giảm giá *" name="code" rules={[{ required: true }]}>
+              <Input style={{ textTransform: 'uppercase' }} onChange={e => form.setFieldValue('code', e.target.value.toUpperCase())} />
+            </Form.Item>
+            <Form.Item label="Loại *" name="type" rules={[{ required: true }]} initialValue="percent">
+              <Select>
+                <Select.Option value="percent">Phần trăm (%)</Select.Option>
+                <Select.Option value="fixed">Cố định (VND)</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item label="Giá trị *" name="value" rules={[{ required: true }]}><InputNumber className="w-full" /></Form.Item>
+            <Form.Item label="Giảm tối đa (VND)" name="maxDiscount"><InputNumber className="w-full" /></Form.Item>
+            <Form.Item label="Đơn tối thiểu (VND)" name="minOrderValue"><InputNumber className="w-full" /></Form.Item>
+            <Form.Item label="Giới hạn sử dụng" name="usageLimit"><InputNumber className="w-full" /></Form.Item>
+            <Form.Item label="Ngày bắt đầu *" name="startDate" rules={[{ required: true }]}><DatePicker className="w-full" /></Form.Item>
+            <Form.Item label="Ngày kết thúc *" name="endDate" rules={[{ required: true }]}><DatePicker className="w-full" /></Form.Item>
+            <Form.Item label="Mô tả" name="description" className="col-span-2"><Input /></Form.Item>
           </div>
-        </div>
-      )}
+          <div className="flex justify-end gap-2 mt-2">
+            <Button onClick={() => setShowModal(false)}>Hủy</Button>
+            <Button type="primary" htmlType="submit">{editing ? 'Lưu thay đổi' : 'Tạo mã'}</Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 }

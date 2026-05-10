@@ -1,30 +1,27 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Steps, Card, Form, Input, Select, Button, Divider, Tag, Radio } from 'antd';
 import { useCart } from '../../context/CartContext';
 import { paymentMethods, formatPrice } from '../../data/mockData';
-import './CheckoutPage.css';
-
-const STEPS = ['Thông tin giao hàng', 'Thanh toán', 'Xác nhận'];
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', note: '' });
+  const [form] = Form.useForm();
   const [payMethod, setPayMethod] = useState('COD');
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
   const [couponMsg, setCouponMsg] = useState('');
+  const [formValues, setFormValues] = useState({});
   const shipping = subtotal >= 5000000 ? 0 : 30000;
   const total = subtotal + shipping - discount;
 
-  const handleChange = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-
   const applyCoupon = () => {
-    if (coupon === 'SALE10') { setDiscount(Math.min(subtotal * 0.1, 1000000)); setCouponMsg('Áp dụng thành công: Giảm 10%'); }
-    else if (coupon === 'FREESHIP') { setDiscount(30000); setCouponMsg('Áp dụng thành công: Miễn phí ship'); }
-    else if (coupon === 'WELCOME50') { setDiscount(50000); setCouponMsg('Áp dụng thành công: Giảm 50,000đ'); }
-    else setCouponMsg('Mã giảm giá không hợp lệ');
+    if (coupon === 'SALE10') { setDiscount(Math.min(subtotal * 0.1, 1000000)); setCouponMsg('✅ Áp dụng thành công: Giảm 10%'); }
+    else if (coupon === 'FREESHIP') { setDiscount(30000); setCouponMsg('✅ Áp dụng thành công: Miễn phí ship'); }
+    else if (coupon === 'WELCOME50') { setDiscount(50000); setCouponMsg('✅ Áp dụng thành công: Giảm 50,000đ'); }
+    else setCouponMsg('❌ Mã giảm giá không hợp lệ');
   };
 
   const handleOrder = () => {
@@ -32,156 +29,159 @@ export default function CheckoutPage() {
     navigate('/orders', { state: { justOrdered: true } });
   };
 
-  if (items.length === 0) {
-    navigate('/cart');
-    return null;
-  }
+  if (items.length === 0) { navigate('/cart'); return null; }
 
   const enabledPayMethods = paymentMethods.filter(p => p.enabled);
+  const selectedPayMethod = enabledPayMethods.find(p => p.code === payMethod);
+
+  const stepsItems = [
+    { title: 'Thông tin giao hàng' },
+    { title: 'Thanh toán' },
+    { title: 'Xác nhận' },
+  ];
 
   return (
-    <div className="checkout-page">
+    <div className="py-8 pb-16">
       <div className="container">
-        <h1 className="page-title">Thanh toán</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Thanh toán</h1>
 
-        {/* Steps */}
-        <div className="checkout-steps">
-          {STEPS.map((s, i) => (
-            <div key={s} className={`step${i <= step ? ' active' : ''}${i < step ? ' done' : ''}`}>
-              <div className="step-num">{i < step ? '✓' : i + 1}</div>
-              <span>{s}</span>
-            </div>
-          ))}
-        </div>
+        <Steps current={step} items={stepsItems} className="mb-8" />
 
-        <div className="checkout-layout">
-          {/* Form */}
-          <div className="checkout-form-area">
+        <div className="grid grid-cols-[1fr_340px] gap-6 md:grid-cols-1">
+          {/* Form area */}
+          <div>
             {step === 0 && (
-              <div className="card">
-                <div className="card-header"><span className="font-semibold">Thông tin giao hàng</span></div>
-                <div className="card-body">
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">Họ và tên *</label>
-                      <input name="name" className="form-control" value={form.name} onChange={handleChange} placeholder="Nguyễn Văn A" required />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Số điện thoại *</label>
-                      <input name="phone" className="form-control" value={form.phone} onChange={handleChange} placeholder="09xxxxxxxx" required />
-                    </div>
-                    <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                      <label className="form-label">Địa chỉ *</label>
-                      <input name="address" className="form-control" value={form.address} onChange={handleChange} placeholder="Số nhà, tên đường" required />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Tỉnh/Thành phố *</label>
-                      <select name="city" className="form-control" value={form.city} onChange={handleChange} required>
-                        <option value="">Chọn tỉnh/thành</option>
-                        {['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng', 'Bình Dương'].map(c => (
-                          <option key={c} value={c}>{c}</option>
+              <Card title="Thông tin giao hàng">
+                <Form form={form} layout="vertical" onFinish={values => { setFormValues(values); setStep(1); }}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Form.Item label="Họ và tên *" name="name" rules={[{ required: true, message: 'Bắt buộc' }]}>
+                      <Input placeholder="Nguyễn Văn A" />
+                    </Form.Item>
+                    <Form.Item label="Số điện thoại *" name="phone" rules={[{ required: true, message: 'Bắt buộc' }]}>
+                      <Input placeholder="09xxxxxxxx" />
+                    </Form.Item>
+                    <Form.Item label="Địa chỉ *" name="address" rules={[{ required: true, message: 'Bắt buộc' }]} className="col-span-2">
+                      <Input placeholder="Số nhà, tên đường" />
+                    </Form.Item>
+                    <Form.Item label="Tỉnh/Thành phố *" name="city" rules={[{ required: true, message: 'Bắt buộc' }]}>
+                      <Select placeholder="Chọn tỉnh/thành">
+                        {['TP. Hồ Chí Minh','Hà Nội','Đà Nẵng','Cần Thơ','Hải Phòng','Bình Dương'].map(c => (
+                          <Select.Option key={c} value={c}>{c}</Select.Option>
                         ))}
-                      </select>
-                    </div>
-                    <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                      <label className="form-label">Ghi chú</label>
-                      <textarea name="note" className="form-control" rows={3} value={form.note} onChange={handleChange} placeholder="Ghi chú cho đơn hàng (không bắt buộc)" />
-                    </div>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item label="Ghi chú" name="note" className="col-span-2">
+                      <Input.TextArea rows={3} placeholder="Ghi chú cho đơn hàng (không bắt buộc)" />
+                    </Form.Item>
                   </div>
-                  <button className="btn btn-primary btn-lg mt-4" onClick={() => setStep(1)} disabled={!form.name || !form.phone || !form.address || !form.city}>
-                    Tiếp tục →
-                  </button>
-                </div>
-              </div>
+                  <Button type="primary" htmlType="submit" size="large">Tiếp tục →</Button>
+                </Form>
+              </Card>
             )}
 
             {step === 1 && (
-              <div className="card">
-                <div className="card-header"><span className="font-semibold">Phương thức thanh toán</span></div>
-                <div className="card-body">
-                  <div className="pay-methods">
+              <Card title="Phương thức thanh toán">
+                <Radio.Group value={payMethod} onChange={e => setPayMethod(e.target.value)} className="w-full">
+                  <div className="flex flex-col gap-3">
                     {enabledPayMethods.map(p => (
-                      <label key={p.code} className={`pay-method${payMethod === p.code ? ' active' : ''}`}>
-                        <input type="radio" name="pay" checked={payMethod === p.code} onChange={() => setPayMethod(p.code)} />
-                        <span className="pay-icon">{p.icon}</span>
-                        <div>
-                          <p className="font-medium">{p.name}</p>
-                          <p className="text-sm text-gray">{p.description}</p>
-                        </div>
-                      </label>
+                      <Radio key={p.code} value={p.code} className="w-full">
+                        <label className={`flex items-center gap-3 ml-2 cursor-pointer p-3 rounded-lg border transition-colors w-full ${payMethod === p.code ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                          <span className="text-2xl">{p.icon}</span>
+                          <div>
+                            <p className="font-medium text-sm">{p.name}</p>
+                            <p className="text-xs text-gray-500">{p.description}</p>
+                          </div>
+                        </label>
+                      </Radio>
                     ))}
                   </div>
-                  <div className="flex gap-2 mt-4">
-                    <button className="btn btn-secondary" onClick={() => setStep(0)}>← Quay lại</button>
-                    <button className="btn btn-primary btn-lg" onClick={() => setStep(2)}>Xem lại đơn →</button>
-                  </div>
+                </Radio.Group>
+                <div className="flex gap-3 mt-5">
+                  <Button onClick={() => setStep(0)}>← Quay lại</Button>
+                  <Button type="primary" size="large" onClick={() => setStep(2)}>Xem lại đơn →</Button>
                 </div>
-              </div>
+              </Card>
             )}
 
             {step === 2 && (
-              <div className="card">
-                <div className="card-header"><span className="font-semibold">Xác nhận đơn hàng</span></div>
-                <div className="card-body">
-                  <div className="confirm-section">
-                    <h4>Thông tin giao hàng</h4>
-                    <p><strong>{form.name}</strong> · {form.phone}</p>
-                    <p>{form.address}, {form.city}</p>
-                    {form.note && <p className="text-gray text-sm">Ghi chú: {form.note}</p>}
+              <Card title="Xác nhận đơn hàng">
+                <div className="flex flex-col gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-sm mb-2">Thông tin giao hàng</h4>
+                    <p><strong>{formValues.name}</strong> · {formValues.phone}</p>
+                    <p className="text-gray-600 text-sm">{formValues.address}, {formValues.city}</p>
+                    {formValues.note && <p className="text-gray-500 text-xs mt-1">Ghi chú: {formValues.note}</p>}
                   </div>
-                  <div className="confirm-section">
-                    <h4>Thanh toán</h4>
-                    <p>{enabledPayMethods.find(p => p.code === payMethod)?.name}</p>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-sm mb-1">Thanh toán</h4>
+                    <p className="text-sm">{selectedPayMethod?.icon} {selectedPayMethod?.name}</p>
                   </div>
-                  <div className="confirm-section">
-                    <h4>Sản phẩm ({items.length})</h4>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-sm mb-2">Sản phẩm ({items.length})</h4>
                     {items.map(item => (
-                      <div key={item.variantId} className="confirm-item">
-                        <span>{item.name} - {item.variant} × {item.qty}</span>
-                        <span>{formatPrice(item.price * item.qty)}</span>
+                      <div key={item.variantId} className="flex justify-between text-sm py-1">
+                        <span className="text-gray-600">{item.name} - {item.variant} × {item.qty}</span>
+                        <span className="font-medium">{formatPrice(item.price * item.qty)}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-2 mt-4">
-                    <button className="btn btn-secondary" onClick={() => setStep(1)}>← Quay lại</button>
-                    <button className="btn btn-primary btn-lg" onClick={handleOrder}>✓ Đặt hàng</button>
+                  <div className="flex gap-3">
+                    <Button onClick={() => setStep(1)}>← Quay lại</Button>
+                    <Button type="primary" size="large" onClick={handleOrder}>✓ Đặt hàng</Button>
                   </div>
                 </div>
-              </div>
+              </Card>
             )}
           </div>
 
           {/* Order Summary */}
-          <div className="checkout-summary card">
-            <div className="card-header"><span className="font-semibold">Đơn hàng ({items.length})</span></div>
-            <div className="card-body">
-              <div className="summary-items">
+          <div className="self-start">
+            <Card title={`Đơn hàng (${items.length})`}>
+              <div className="flex flex-col gap-3 mb-4">
                 {items.map(item => (
-                  <div key={item.variantId} className="summary-product">
-                    <img src={item.thumbnail} alt={item.name} />
-                    <div>
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-sm text-gray">{item.variant} × {item.qty}</p>
+                  <div key={item.variantId} className="flex items-center gap-3">
+                    <img src={item.thumbnail} alt={item.name} className="w-10 h-10 rounded object-cover bg-gray-100" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.variant} × {item.qty}</p>
                     </div>
-                    <span className="font-semibold text-sm">{formatPrice(item.price * item.qty)}</span>
+                    <span className="text-sm font-semibold">{formatPrice(item.price * item.qty)}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Coupon */}
-              <div className="coupon-row">
-                <input className="form-control" placeholder="Mã giảm giá" value={coupon} onChange={e => { setCoupon(e.target.value.toUpperCase()); setCouponMsg(''); }} />
-                <button className="btn btn-outline btn-sm" onClick={applyCoupon}>Áp dụng</button>
+              <div className="flex gap-2 mb-2">
+                <Input
+                  placeholder="Mã giảm giá"
+                  value={coupon}
+                  onChange={e => { setCoupon(e.target.value.toUpperCase()); setCouponMsg(''); }}
+                  size="small"
+                />
+                <Button size="small" onClick={applyCoupon}>Áp dụng</Button>
               </div>
-              {couponMsg && <p className={`text-sm ${couponMsg.includes('không') ? 'text-danger' : 'text-success'}`}>{couponMsg}</p>}
+              {couponMsg && (
+                <p className={`text-xs mb-3 ${couponMsg.includes('❌') ? 'text-red-500' : 'text-green-600'}`}>{couponMsg}</p>
+              )}
 
-              <div className="divider" />
-              <div className="summary-row"><span>Tạm tính</span><span>{formatPrice(subtotal)}</span></div>
-              <div className="summary-row"><span>Vận chuyển</span><span>{shipping === 0 ? <span className="text-success">Miễn phí</span> : formatPrice(shipping)}</span></div>
-              {discount > 0 && <div className="summary-row text-success"><span>Giảm giá</span><span>−{formatPrice(discount)}</span></div>}
-              <div className="divider" />
-              <div className="summary-row summary-total"><span>Tổng cộng</span><span>{formatPrice(total)}</span></div>
-            </div>
+              <Divider className="my-3" />
+              <div className="flex justify-between text-sm mb-1.5">
+                <span className="text-gray-600">Tạm tính</span><span>{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm mb-1.5">
+                <span className="text-gray-600">Vận chuyển</span>
+                <span>{shipping === 0 ? <Tag color="green">Miễn phí</Tag> : formatPrice(shipping)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm text-green-600 mb-1.5">
+                  <span>Giảm giá</span><span>−{formatPrice(discount)}</span>
+                </div>
+              )}
+              <Divider className="my-3" />
+              <div className="flex justify-between font-bold text-lg">
+                <span>Tổng cộng</span>
+                <span className="text-blue-600">{formatPrice(total)}</span>
+              </div>
+            </Card>
           </div>
         </div>
       </div>

@@ -1,18 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Select, Button, Rate, Empty, Radio, InputNumber, Card } from 'antd';
+import { FilterOutlined } from '@ant-design/icons';
 import { categories, formatPrice } from '../../data/mockData';
 import { useProducts } from '../../context/ProductContext';
-import './ProductsPage.css';
-
-function StarRating({ rating }) {
-  return (
-    <div className="stars">
-      {[1,2,3,4,5].map(s => (
-        <span key={s} className={`star${s > Math.round(rating) ? ' empty' : ''}`}>★</span>
-      ))}
-    </div>
-  );
-}
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,7 +13,8 @@ export default function ProductsPage() {
   const query = searchParams.get('q') || '';
 
   const [sort, setSort] = useState('default');
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
   const [brand, setBrand] = useState('');
   const { products } = useProducts();
 
@@ -33,127 +25,110 @@ export default function ProductsPage() {
     if (categoryId) list = list.filter(p => p.categoryId === categoryId);
     if (query) list = list.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.brand.toLowerCase().includes(query.toLowerCase()));
     if (brand) list = list.filter(p => p.brand === brand);
-    if (priceRange.min) list = list.filter(p => p.basePrice >= Number(priceRange.min));
-    if (priceRange.max) list = list.filter(p => p.basePrice <= Number(priceRange.max));
+    if (priceMin) list = list.filter(p => p.basePrice >= Number(priceMin));
+    if (priceMax) list = list.filter(p => p.basePrice <= Number(priceMax));
     if (sort === 'price-asc') list.sort((a, b) => a.basePrice - b.basePrice);
     if (sort === 'price-desc') list.sort((a, b) => b.basePrice - a.basePrice);
     if (sort === 'rating') list.sort((a, b) => b.rating - a.rating);
     if (sort === 'popular') list.sort((a, b) => b.reviewCount - a.reviewCount);
     return list;
-  }, [categoryId, query, sort, priceRange, brand]);
+  }, [categoryId, query, sort, priceMin, priceMax, brand, products]);
 
   const selectedCategory = categories.find(c => c.id === categoryId);
 
   const resetFilters = () => {
-    setBrand('');
-    setPriceRange({ min: '', max: '' });
-    setSort('default');
+    setBrand(''); setPriceMin(''); setPriceMax(''); setSort('default');
     setSearchParams({});
   };
 
   return (
-    <div className="products-page">
+    <div className="py-6 pb-12">
       <div className="container">
         {/* Breadcrumb */}
-        <div className="breadcrumb">
-          <span onClick={() => navigate('/')}>Trang chủ</span>
+        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-5">
+          <span onClick={() => navigate('/')} className="cursor-pointer hover:text-blue-600">Trang chủ</span>
           <span>›</span>
-          <span className="active">{selectedCategory ? selectedCategory.name : query ? `Tìm: "${query}"` : 'Tất cả sản phẩm'}</span>
-        </div>
+          <span className="text-gray-800 font-medium">
+            {selectedCategory ? selectedCategory.name : query ? `Tìm: "${query}"` : 'Tất cả sản phẩm'}
+          </span>
+        </nav>
 
-        <div className="products-layout">
-          {/* Sidebar filter */}
-          <aside className="filter-sidebar">
-            <div className="card">
-              <div className="card-header">
-                <span className="font-semibold">Bộ lọc</span>
-                <button className="btn btn-sm btn-secondary" onClick={resetFilters}>Xóa lọc</button>
-              </div>
-              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {/* Category */}
+        <div className="grid grid-cols-[240px_1fr] gap-6 md:grid-cols-1">
+          {/* Filter Sidebar */}
+          <aside className="sticky top-20 self-start">
+            <Card size="small" title={<span className="font-semibold flex items-center gap-2"><FilterOutlined /> Bộ lọc</span>}
+              extra={<Button size="small" onClick={resetFilters}>Xóa lọc</Button>}
+            >
+              <div className="flex flex-col gap-5">
                 <div>
-                  <p className="filter-label">Danh mục</p>
-                  <div className="filter-list">
-                    <label className="filter-item">
-                      <input type="radio" name="cat" checked={!categoryId} onChange={() => setSearchParams(query ? { q: query } : {})} />
-                      <span>Tất cả</span>
-                    </label>
-                    {categories.map(cat => (
-                      <label key={cat.id} className="filter-item">
-                        <input type="radio" name="cat" checked={categoryId === cat.id} onChange={() => setSearchParams({ category: cat.id })} />
-                        <span>{cat.name} ({cat.productCount})</span>
-                      </label>
-                    ))}
-                  </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Danh mục</p>
+                  <Radio.Group
+                    value={categoryId}
+                    onChange={e => e.target.value ? setSearchParams({ category: e.target.value }) : setSearchParams(query ? { q: query } : {})}
+                    className="flex flex-col gap-1.5"
+                  >
+                    <Radio value={null}>Tất cả</Radio>
+                    {categories.map(cat => <Radio key={cat.id} value={cat.id}>{cat.name} ({cat.productCount})</Radio>)}
+                  </Radio.Group>
                 </div>
 
-                {/* Brand */}
                 <div>
-                  <p className="filter-label">Thương hiệu</p>
-                  <div className="filter-list">
-                    <label className="filter-item">
-                      <input type="radio" name="brand" checked={brand === ''} onChange={() => setBrand('')} />
-                      <span>Tất cả</span>
-                    </label>
-                    {brands.map(b => (
-                      <label key={b} className="filter-item">
-                        <input type="radio" name="brand" checked={brand === b} onChange={() => setBrand(b)} />
-                        <span>{b}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Thương hiệu</p>
+                  <Radio.Group value={brand} onChange={e => setBrand(e.target.value)} className="flex flex-col gap-1.5">
+                    <Radio value="">Tất cả</Radio>
+                    {brands.map(b => <Radio key={b} value={b}>{b}</Radio>)}
+                  </Radio.Group>
                 </div>
 
-                {/* Price */}
                 <div>
-                  <p className="filter-label">Khoảng giá (VND)</p>
-                  <div className="price-inputs">
-                    <input className="form-control" placeholder="Từ" value={priceRange.min} onChange={e => setPriceRange(p => ({ ...p, min: e.target.value }))} type="number" />
-                    <span>—</span>
-                    <input className="form-control" placeholder="Đến" value={priceRange.max} onChange={e => setPriceRange(p => ({ ...p, max: e.target.value }))} type="number" />
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Khoảng giá (VND)</p>
+                  <div className="flex items-center gap-2">
+                    <InputNumber placeholder="Từ" value={priceMin} onChange={v => setPriceMin(v)} className="w-full" formatter={v => v?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                    <span className="text-gray-400">—</span>
+                    <InputNumber placeholder="Đến" value={priceMax} onChange={v => setPriceMax(v)} className="w-full" formatter={v => v?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           </aside>
 
-          {/* Product list */}
-          <div className="products-main">
-            <div className="products-toolbar">
-              <p className="products-count">
+          {/* Products */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-gray-600">
                 {query && <span>Kết quả cho <strong>"{query}"</strong> – </span>}
                 <strong>{filtered.length}</strong> sản phẩm
               </p>
-              <select className="form-control" style={{ width: 'auto' }} value={sort} onChange={e => setSort(e.target.value)}>
-                <option value="default">Mặc định</option>
-                <option value="price-asc">Giá thấp → cao</option>
-                <option value="price-desc">Giá cao → thấp</option>
-                <option value="rating">Đánh giá cao nhất</option>
-                <option value="popular">Phổ biến nhất</option>
-              </select>
+              <Select value={sort} onChange={setSort} className="w-44">
+                <Select.Option value="default">Mặc định</Select.Option>
+                <Select.Option value="price-asc">Giá thấp → cao</Select.Option>
+                <Select.Option value="price-desc">Giá cao → thấp</Select.Option>
+                <Select.Option value="rating">Đánh giá cao nhất</Select.Option>
+                <Select.Option value="popular">Phổ biến nhất</Select.Option>
+              </Select>
             </div>
 
             {filtered.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">🔍</div>
-                <p className="empty-state-text">Không tìm thấy sản phẩm phù hợp</p>
-                <button className="btn btn-primary mt-4" onClick={resetFilters}>Xóa bộ lọc</button>
-              </div>
+              <Empty description="Không tìm thấy sản phẩm phù hợp" className="py-16">
+                <Button type="primary" onClick={resetFilters}>Xóa bộ lọc</Button>
+              </Empty>
             ) : (
-              <div className="product-grid">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-5">
                 {filtered.map(p => (
-                  <div key={p.id} className="product-card" onClick={() => navigate(`/products/${p.slug}`)}>
+                  <div key={p.id} className="product-card relative" onClick={() => navigate(`/products/${p.slug}`)}>
                     <div className="product-card-img">
                       <img src={p.thumbnail} alt={p.name} />
-                      {p.featured && <span className="product-badge">Nổi bật</span>}
+                      {p.featured && (
+                        <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">Nổi bật</span>
+                      )}
                     </div>
-                    <div className="product-card-body">
-                      <p className="product-card-brand">{p.brand}</p>
-                      <p className="product-card-name">{p.name}</p>
-                      <p className="product-card-price">{formatPrice(p.basePrice)}</p>
-                      <div className="product-card-rating">
-                        <StarRating rating={p.rating} />
-                        <span>({p.reviewCount})</span>
+                    <div className="p-3.5">
+                      <p className="text-xs text-gray-500 mb-1">{p.brand}</p>
+                      <p className="font-semibold text-sm text-gray-800 mb-1.5 line-clamp-2">{p.name}</p>
+                      <p className="text-base font-bold text-blue-600">{formatPrice(p.basePrice)}</p>
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <Rate disabled defaultValue={p.rating} allowHalf className="text-xs" />
+                        <span className="text-xs text-gray-400">({p.reviewCount})</span>
                       </div>
                     </div>
                   </div>

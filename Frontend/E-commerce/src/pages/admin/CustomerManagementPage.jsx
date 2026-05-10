@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Table, Button, Tag, Modal, Input, Space } from 'antd';
+import { SearchOutlined, EyeOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import { customers as initCustomers, formatPrice } from '../../data/mockData';
-import './AdminPage.css';
 
 export default function CustomerManagementPage() {
   const [customerList, setCustomerList] = useState(initCustomers);
@@ -15,83 +16,60 @@ export default function CustomerManagementPage() {
 
   const toggleStatus = (id) => setCustomerList(l => l.map(c => c.id === id ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' } : c));
 
+  const columns = [
+    { title: 'Khách hàng', key: 'name', render: (_, r) => (
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">{r.name[0]}</div>
+        <span className="font-medium">{r.name}</span>
+      </div>
+    )},
+    { title: 'Liên hệ', key: 'contact', render: (_, r) => (
+      <div><p className="text-sm">{r.email}</p><p className="text-xs text-gray-500">{r.phone}</p></div>
+    )},
+    { title: 'Ngày đăng ký', dataIndex: 'joinDate', key: 'joinDate', render: v => <span className="text-gray-500">{v}</span> },
+    { title: 'Đơn hàng', dataIndex: 'totalOrders', key: 'orders', render: v => `${v} đơn` },
+    { title: 'Tổng chi tiêu', dataIndex: 'totalSpent', key: 'spent', render: v => <span className="text-blue-600 font-semibold">{formatPrice(v)}</span> },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: v => (
+      <Tag color={v === 'active' ? 'green' : 'default'}>{v === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Tag>
+    )},
+    { title: 'Thao tác', key: 'action', render: (_, r) => (
+      <Space>
+        <Button size="small" icon={<EyeOutlined />} onClick={() => setSelected(r)}>Xem</Button>
+        <Button size="small" danger={r.status === 'active'} icon={r.status === 'active' ? <LockOutlined /> : <UnlockOutlined />} onClick={() => toggleStatus(r.id)}>
+          {r.status === 'active' ? 'Khóa' : 'Mở khóa'}
+        </Button>
+      </Space>
+    )},
+  ];
+
   return (
-    <div className="admin-page">
-      <div className="admin-toolbar">
-        <div className="search-bar">
-          <span className="search-bar-icon">🔍</span>
-          <input className="form-control" placeholder="Tìm tên, email, số điện thoại..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <span className="text-sm text-gray">Tổng: <strong>{customerList.length}</strong> khách hàng</span>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-4">
+        <Input prefix={<SearchOutlined />} placeholder="Tìm tên, email, số điện thoại..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-sm" />
+        <span className="text-sm text-gray-500">Tổng: <strong>{customerList.length}</strong> khách hàng</span>
       </div>
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr><th>Khách hàng</th><th>Liên hệ</th><th>Ngày đăng ký</th><th>Đơn hàng</th><th>Tổng chi tiêu</th><th>Trạng thái</th><th>Thao tác</th></tr>
-            </thead>
-            <tbody>
-              {filtered.map(c => (
-                <tr key={c.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', color: 'var(--white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>{c.name[0]}</div>
-                      <span className="font-medium">{c.name}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <p className="text-sm">{c.email}</p>
-                    <p className="text-sm text-gray">{c.phone}</p>
-                  </td>
-                  <td className="text-gray">{c.joinDate}</td>
-                  <td>{c.totalOrders} đơn</td>
-                  <td className="font-semibold text-primary">{formatPrice(c.totalSpent)}</td>
-                  <td>
-                    <span className={`badge ${c.status === 'active' ? 'badge-green' : 'badge-gray'}`}>
-                      {c.status === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => setSelected(c)}>Xem</button>
-                      <button className={`btn btn-sm ${c.status === 'active' ? 'btn-danger' : 'btn-success'}`} onClick={() => toggleStatus(c.id)}>
-                        {c.status === 'active' ? 'Khóa' : 'Mở khóa'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Table columns={columns} dataSource={filtered} rowKey="id" scroll={{ x: true }} size="small" pagination={{ pageSize: 10 }} />
 
-      {selected && (
-        <div className="modal-backdrop" onClick={() => setSelected(null)}>
-          <div className="modal modal-md" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="font-semibold">Thông tin khách hàng</span>
-              <button className="modal-close" onClick={() => setSelected(null)}>×</button>
-            </div>
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--primary)', color: 'var(--white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700 }}>{selected.name[0]}</div>
-                <div>
-                  <p className="font-bold text-xl">{selected.name}</p>
-                  <span className={`badge ${selected.status === 'active' ? 'badge-green' : 'badge-gray'}`}>{selected.status === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}</span>
-                </div>
+      <Modal title="Thông tin khách hàng" open={!!selected} onCancel={() => setSelected(null)} footer={null}>
+        {selected && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-blue-600 text-white text-2xl font-bold flex items-center justify-center flex-shrink-0">{selected.name[0]}</div>
+              <div>
+                <p className="text-xl font-bold">{selected.name}</p>
+                <Tag color={selected.status === 'active' ? 'green' : 'default'}>{selected.status === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Tag>
               </div>
-              {[['📧 Email', selected.email], ['📞 Điện thoại', selected.phone], ['📍 Địa chỉ', selected.address], ['📅 Ngày đăng ký', selected.joinDate], ['🛒 Số đơn hàng', `${selected.totalOrders} đơn`], ['💰 Tổng chi tiêu', formatPrice(selected.totalSpent)]].map(([label, value]) => (
-                <div key={label} style={{ display: 'flex', gap: 12 }}>
-                  <span style={{ width: 140, color: 'var(--gray-500)', fontSize: 14 }}>{label}</span>
-                  <span style={{ fontSize: 14, fontWeight: 500 }}>{value}</span>
-                </div>
-              ))}
             </div>
+            {[['📧 Email', selected.email],['📞 Điện thoại', selected.phone],['📍 Địa chỉ', selected.address],['📅 Ngày đăng ký', selected.joinDate],['🛒 Số đơn hàng', `${selected.totalOrders} đơn`],['💰 Tổng chi tiêu', formatPrice(selected.totalSpent)]].map(([label, value]) => (
+              <div key={label} className="flex gap-4 text-sm">
+                <span className="w-36 text-gray-500">{label}</span>
+                <span className="font-medium">{value}</span>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

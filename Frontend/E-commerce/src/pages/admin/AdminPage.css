@@ -1,6 +1,0 @@
-.admin-page { display: flex; flex-direction: column; gap: 20px; }
-.admin-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.admin-toolbar .search-bar { flex: 1; min-width: 200px; }
-.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-@media (max-width: 768px) { .form-grid-2 { grid-template-columns: 1fr; } }

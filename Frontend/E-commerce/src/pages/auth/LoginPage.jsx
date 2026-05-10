@@ -1,69 +1,71 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Card, Form, Input, Button, Alert } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
-import './Auth.css';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (values) => {
     setLoading(true);
     setError('');
-    const result = login(form.email, form.password);
+    const result = login(values.email, values.password);
     setLoading(false);
     if (result.ok) {
-      const role = result.role;
-      if (role === 'admin') navigate('/admin/dashboard');
-      else if (role === 'staff') navigate('/staff/orders');
+      if (result.role === 'admin') navigate('/admin/dashboard');
+      else if (result.role === 'staff') navigate('/staff/orders');
       else navigate('/');
     } else {
       setError(result.message);
     }
   };
 
-  const handleChange = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const fillDemo = (email, password) => form.setFieldsValue({ email, password });
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-logo">🛒</div>
-        <h2 className="auth-title">Đăng nhập</h2>
-        <p className="auth-subtitle">Chào mừng trở lại!</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+      <Card className="w-full max-w-[420px] shadow-xl rounded-2xl">
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-3">🛒</div>
+          <h2 className="text-2xl font-bold text-gray-800">Đăng nhập</h2>
+          <p className="text-gray-500 mt-1">Chào mừng trở lại!</p>
+        </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && <Alert message={error} type="error" showIcon className="mb-4" />}
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <input name="email" type="email" className="form-control" placeholder="Nhập email của bạn" value={form.email} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Mật khẩu</label>
-            <input name="password" type="password" className="form-control" placeholder="Nhập mật khẩu" value={form.password} onChange={handleChange} required />
-          </div>
-          <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-        </form>
+        <Form form={form} layout="vertical" onFinish={handleSubmit} size="large">
+          <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Vui lòng nhập email' }, { type: 'email', message: 'Email không hợp lệ' }]}>
+            <Input prefix={<UserOutlined />} placeholder="Nhập email của bạn" />
+          </Form.Item>
+          <Form.Item label="Mật khẩu" name="password" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}>
+            <Input.Password prefix={<LockOutlined />} placeholder="Nhập mật khẩu" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block loading={loading} className="h-11 font-semibold">
+            Đăng nhập
+          </Button>
+        </Form>
 
-        <div className="auth-demo">
-          <p className="text-sm text-gray">Tài khoản demo:</p>
-          <div className="auth-demo-list">
-            <span onClick={() => setForm({ email: 'admin@shop.com', password: 'admin123' })}>Admin</span>
-            <span onClick={() => setForm({ email: 'dinhvangiang@shop.com', password: 'staff123' })}>Staff</span>
-            <span onClick={() => setForm({ email: 'nguyenvanan@gmail.com', password: 'customer123' })}>Customer</span>
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-xs text-gray-500 mb-2">Tài khoản demo:</p>
+          <div className="flex gap-2 flex-wrap">
+            {[['admin@shop.com','admin123','Admin'],['dinhvangiang@shop.com','staff123','Staff'],['nguyenvanan@gmail.com','customer123','Customer']].map(([email,pw,label]) => (
+              <button key={label} onClick={() => fillDemo(email, pw)} className="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors border border-blue-200">
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <p className="auth-footer">
-          Chưa có tài khoản? <Link to="/register" className="text-primary font-semibold">Đăng ký ngay</Link>
+        <p className="text-center text-sm text-gray-500 mt-4">
+          Chưa có tài khoản?{' '}
+          <Link to="/register" className="text-blue-600 font-semibold hover:underline">Đăng ký ngay</Link>
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

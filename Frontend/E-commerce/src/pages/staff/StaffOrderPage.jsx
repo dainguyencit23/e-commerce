@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { orders as initOrders, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR, formatPrice } from '../../data/mockData';
-import '../admin/OrderManagementPage.css';
-import '../admin/AdminPage.css';
+import { Table, Tag, Button, Modal, Tabs, Space } from 'antd';
+import { orders as initOrders, ORDER_STATUS_LABEL, formatPrice } from '../../data/mockData';
+
+const STATUS_TAG_COLOR = { pending:'orange', confirmed:'blue', shipping:'cyan', delivered:'green', cancelled:'red' };
 
 const ALLOWED_TRANSITIONS = {
   pending: ['confirmed', 'cancelled'],
@@ -10,6 +11,8 @@ const ALLOWED_TRANSITIONS = {
   delivered: [],
   cancelled: [],
 };
+
+const STATUSES = ['all', 'pending', 'confirmed', 'shipping', 'delivered', 'cancelled'];
 
 export default function StaffOrderPage() {
   const [orderList, setOrderList] = useState(initOrders);
@@ -23,72 +26,68 @@ export default function StaffOrderPage() {
     setSelected(prev => prev ? { ...prev, status: newStatus } : null);
   };
 
-  return (
-    <div className="admin-page">
-      <div className="status-tabs">
-        {['all', 'pending', 'confirmed', 'shipping', 'delivered', 'cancelled'].map(s => (
-          <button key={s} className={`tab-btn${statusFilter === s ? ' active' : ''}`} onClick={() => setStatusFilter(s)}>
-            {s === 'all' ? 'Tất cả' : ORDER_STATUS_LABEL[s]}
-            <span className="tab-count">{s === 'all' ? orderList.length : orderList.filter(o => o.status === s).length}</span>
-          </button>
+  const tabItems = STATUSES.map(s => ({
+    key: s,
+    label: `${s === 'all' ? 'Tất cả' : ORDER_STATUS_LABEL[s]} (${s === 'all' ? orderList.length : orderList.filter(o => o.status === s).length})`,
+  }));
+
+  const columns = [
+    { title: 'Mã đơn', dataIndex: 'id', key: 'id', render: v => <span className="text-blue-600 font-semibold">#{v}</span> },
+    { title: 'Khách hàng', key: 'customer', render: (_, r) => (
+      <div><p>{r.customerName}</p><p className="text-xs text-gray-500">{r.customerPhone}</p></div>
+    )},
+    { title: 'Ngày', dataIndex: 'date', key: 'date', render: v => <span className="text-sm text-gray-500">{v}</span> },
+    { title: 'Tổng', dataIndex: 'total', key: 'total', render: v => <span className="font-semibold">{formatPrice(v)}</span> },
+    { title: 'Thanh toán', key: 'payment', render: (_, r) => (
+      <Tag color={r.paymentStatus === 'paid' ? 'green' : 'orange'}>{r.paymentStatus === 'paid' ? 'Đã TT' : 'COD'}</Tag>
+    )},
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: v => <Tag color={STATUS_TAG_COLOR[v]}>{ORDER_STATUS_LABEL[v]}</Tag> },
+    { title: 'Hành động', key: 'action', render: (_, r) => (
+      <Space wrap>
+        <Button size="small" onClick={() => setSelected(r)}>Chi tiết</Button>
+        {ALLOWED_TRANSITIONS[r.status].map(next => (
+          <Button key={next} size="small" type="primary" onClick={() => updateStatus(r.id, next)}>
+            → {ORDER_STATUS_LABEL[next]}
+          </Button>
         ))}
-      </div>
+      </Space>
+    )},
+  ];
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="table">
-            <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Ngày</th><th>Tổng</th><th>Thanh toán</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
-            <tbody>
-              {filtered.map(o => (
-                <tr key={o.id}>
-                  <td className="font-semibold text-primary">#{o.id}</td>
-                  <td>{o.customerName}<br /><span className="text-sm text-gray">{o.customerPhone}</span></td>
-                  <td className="text-gray text-sm">{o.date}</td>
-                  <td className="font-semibold">{formatPrice(o.total)}</td>
-                  <td><span className={`badge ${o.paymentStatus === 'paid' ? 'badge-green' : 'badge-yellow'}`}>{o.paymentStatus === 'paid' ? 'Đã TT' : 'COD'}</span></td>
-                  <td><span className="badge" style={{ background: ORDER_STATUS_COLOR[o.status] + '22', color: ORDER_STATUS_COLOR[o.status] }}>{ORDER_STATUS_LABEL[o.status]}</span></td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => setSelected(o)}>Chi tiết</button>
-                      {ALLOWED_TRANSITIONS[o.status].map(next => (
-                        <button key={next} className="btn btn-sm btn-primary" onClick={() => updateStatus(o.id, next)}>
-                          → {ORDER_STATUS_LABEL[next]}
-                        </button>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  return (
+    <div className="flex flex-col gap-4">
+      <Tabs activeKey={statusFilter} onChange={setStatusFilter} items={tabItems} />
+      <Table columns={columns} dataSource={filtered} rowKey="id" scroll={{ x: true }} size="small" pagination={{ pageSize: 10 }} />
 
-      {selected && (
-        <div className="modal-backdrop" onClick={() => setSelected(null)}>
-          <div className="modal modal-md" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="font-semibold">Chi tiết đơn #{selected.id}</span>
-              <button className="modal-close" onClick={() => setSelected(null)}>×</button>
+      <Modal
+        title={`Chi tiết đơn #${selected?.id}`}
+        open={!!selected}
+        onCancel={() => setSelected(null)}
+        footer={null}
+      >
+        {selected && (
+          <div className="flex flex-col gap-3">
+            <div>
+              <p className="font-semibold">{selected.customerName} · {selected.customerPhone}</p>
+              <p className="text-sm text-gray-500">{selected.shippingAddress}</p>
             </div>
-            <div className="modal-body">
-              <p><strong>{selected.customerName}</strong> · {selected.customerPhone}</p>
-              <p className="text-sm text-gray mb-4">{selected.shippingAddress}</p>
+            <div>
               {selected.items.map((item, i) => (
-                <div key={i} className="modal-order-item">
-                  <span style={{ flex: 1 }}>{item.name} ({item.variant})</span>
-                  <span className="text-gray">×{item.qty}</span>
+                <div key={i} className="flex justify-between text-sm py-1.5 border-b border-gray-100 last:border-0">
+                  <span className="flex-1">{item.name} ({item.variant})</span>
+                  <span className="text-gray-500 mx-3">×{item.qty}</span>
                   <span className="font-semibold">{formatPrice(item.price * item.qty)}</span>
                 </div>
               ))}
-              <div className="modal-order-totals mt-4">
-                <div className="modal-total-final"><span>Tổng cộng</span><span>{formatPrice(selected.total)}</span></div>
-              </div>
-              {selected.notes && <p className="text-sm text-gray mt-2">Ghi chú: {selected.notes}</p>}
             </div>
+            <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200">
+              <span>Tổng cộng</span>
+              <span className="text-blue-600">{formatPrice(selected.total)}</span>
+            </div>
+            {selected.notes && <p className="text-sm text-gray-500">Ghi chú: {selected.notes}</p>}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }
