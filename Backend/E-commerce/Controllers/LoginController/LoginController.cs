@@ -17,7 +17,7 @@ namespace E_commerce.Controllers.LoginController
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult> Create([FromBody] LoginRequestDTO dto)
+        public async Task<ActionResult> Login([FromBody] LoginRequestDTO dto)
         {
             if (!ModelState.IsValid)
             {
@@ -26,11 +26,11 @@ namespace E_commerce.Controllers.LoginController
             var result = await _loginService.LoginAsync(dto);
             if (result.IsSuccess)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             else
             {
-                return BadRequest(result.Message);
+                return BadRequest(result);
             }
         }
     }
