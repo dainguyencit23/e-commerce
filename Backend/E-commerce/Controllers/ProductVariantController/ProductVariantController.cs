@@ -15,7 +15,21 @@ namespace E_commerce.Controllers
         {
             _variantService = variantService;
         }
-        // Thêm cái get variants của 1 products
+
+        [HttpGet("products/{id}/variants")]
+        public async Task<IActionResult> GetVariants(Guid id)
+        {
+            try
+            {
+                var res = await _variantService.GetVariantsByProductId(id);
+                return Ok(BaseResponse<List<VariantResponse>>.Ok(res));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(BaseResponse<string>.Fail(ex.Message, 404));
+            }
+        }
+
         [HttpPost("products/{id}/variants")]
         [Authorize(Roles ="Admin,Staff")]
         public async Task<IActionResult> AddVariant(Guid id, CreateVariantRequest request)

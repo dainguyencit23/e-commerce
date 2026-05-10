@@ -8,7 +8,7 @@ Hệ thống thương mại điện tử được xây dựng với **React**, *
 
 | Tầng | Công nghệ |
 |------|-----------|
-| Frontend | React (TypeScript), Vite |
+| Frontend | React (JavaScript), Vite |
 | Backend | ASP.NET Core Web API (.NET 8) |
 | Database | Microsoft SQL Server |
 | ORM | Entity Framework Core |

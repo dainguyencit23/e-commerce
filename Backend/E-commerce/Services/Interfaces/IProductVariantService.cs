@@ -7,5 +7,6 @@ namespace E_commerce.Services.Interfaces
         Task<VariantResponse> AddVariant(Guid id, CreateVariantRequest request);
         Task<VariantResponse> UpdateVariant(Guid id, UpdateVariantRequest request);
         Task DeleteVariant(Guid id);
+        Task<List<VariantResponse>> GetVariantsByProductId(Guid productId);
     }
 }
