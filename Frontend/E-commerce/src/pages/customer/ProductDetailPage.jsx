@@ -1,21 +1,12 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Button, Rate, Tag, InputNumber, Card, Divider } from 'antd';
+import { ShoppingCartOutlined, ThunderboltOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { getReviewsByProduct, getCategoryById, formatPrice } from '../../data/mockData';
 import { useProducts } from '../../context/ProductContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, ToastContainer } from '../../hooks/useToast';
-import './ProductDetailPage.css';
-
-function StarRating({ rating, size = 14 }) {
-  return (
-    <div className="stars">
-      {[1,2,3,4,5].map(s => (
-        <span key={s} className={`star${s > Math.round(rating) ? ' empty' : ''}`} style={{ fontSize: size }}>★</span>
-      ))}
-    </div>
-  );
-}
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
@@ -33,10 +24,10 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="container" style={{ padding: '80px 16px', textAlign: 'center' }}>
-        <div style={{ fontSize: 48 }}>😕</div>
-        <p style={{ marginTop: 16, fontSize: 18 }}>Không tìm thấy sản phẩm</p>
-        <button className="btn btn-primary mt-4" onClick={() => navigate('/products')}>Quay lại</button>
+      <div className="container py-20 text-center">
+        <div className="text-6xl mb-4">😕</div>
+        <p className="text-xl text-gray-600 mb-6">Không tìm thấy sản phẩm</p>
+        <Button type="primary" onClick={() => navigate('/products')}>Quay lại</Button>
       </div>
     );
   }
@@ -46,10 +37,7 @@ export default function ProductDetailPage() {
   const allImages = [product.thumbnail, ...(product.images || [])];
 
   const handleAddToCart = () => {
-    if (!user) {
-      showToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'warning');
-      return;
-    }
+    if (!user) { showToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'warning'); return; }
     if (!selectedVariant) return;
     addToCart(product, selectedVariant, qty);
     setAdded(true);
@@ -58,10 +46,7 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    if (!user) {
-      showToast('Vui lòng đăng nhập để mua hàng', 'warning');
-      return;
-    }
+    if (!user) { showToast('Vui lòng đăng nhập để mua hàng', 'warning'); return; }
     if (!selectedVariant) return;
     addToCart(product, selectedVariant, qty);
     navigate('/cart');
@@ -69,147 +54,158 @@ export default function ProductDetailPage() {
 
   return (
     <>
-    <div className="product-detail-page">
-      <div className="container">
-        {/* Breadcrumb */}
-        <div className="breadcrumb">
-          <span onClick={() => navigate('/')}>Trang chủ</span>
-          <span>›</span>
-          <span onClick={() => navigate(`/products?category=${product.categoryId}`)}>{category?.name}</span>
-          <span>›</span>
-          <span className="active">{product.name}</span>
-        </div>
+      <div className="py-6 pb-16">
+        <div className="container">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+            <span onClick={() => navigate('/')} className="cursor-pointer hover:text-blue-600">Trang chủ</span>
+            <span>›</span>
+            <span onClick={() => navigate(`/products?category=${product.categoryId}`)} className="cursor-pointer hover:text-blue-600">{category?.name}</span>
+            <span>›</span>
+            <span className="text-gray-800 font-medium truncate max-w-xs">{product.name}</span>
+          </nav>
 
-        <div className="detail-grid">
-          {/* Images */}
-          <div className="detail-images">
-            <div className="main-image">
-              <img src={allImages[activeImg]} alt={product.name} />
-            </div>
-            <div className="thumb-list">
-              {allImages.map((img, i) => (
-                <div key={i} className={`thumb${activeImg === i ? ' active' : ''}`} onClick={() => setActiveImg(i)}>
-                  <img src={img} alt={`${product.name} ${i+1}`} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="detail-info">
-            <p className="detail-brand">{product.brand}</p>
-            <h1 className="detail-name">{product.name}</h1>
-
-            <div className="detail-rating">
-              <StarRating rating={product.rating} size={16} />
-              <span className="rating-score">{product.rating}</span>
-              <span className="text-gray text-sm">({product.reviewCount} đánh giá)</span>
-              <span className="detail-stock">{selectedVariant ? `Còn ${selectedVariant.stock} sản phẩm` : `Còn ${product.stock} sản phẩm`}</span>
-            </div>
-
-            <div className="detail-price">
-              {formatPrice(selectedVariant?.price || product.basePrice)}
-            </div>
-
-            <p className="detail-desc">{product.description}</p>
-
-            {/* Variants */}
-            {product.variants.length > 0 && (
-              <div className="detail-variants">
-                <p className="variant-label">Phiên bản: <strong>{selectedVariant?.label}</strong></p>
-                <div className="variant-list">
-                  {product.variants.map(v => (
-                    <button
-                      key={v.id}
-                      className={`variant-btn${selectedVariant?.id === v.id ? ' active' : ''}`}
-                      onClick={() => setSelectedVariant(v)}
-                    >
-                      {v.label}
-                    </button>
-                  ))}
-                </div>
+          <div className="grid grid-cols-2 gap-10 md:grid-cols-1">
+            {/* Images */}
+            <div>
+              <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 mb-3">
+                <img src={allImages[activeImg]} alt={product.name} className="w-full h-full object-cover" />
               </div>
-            )}
-
-            {/* Qty */}
-            <div className="detail-qty">
-              <p className="variant-label">Số lượng:</p>
-              <div className="qty-control">
-                <button onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
-                <span>{qty}</span>
-                <button onClick={() => setQty(q => q + 1)}>+</button>
+              <div className="flex gap-2 flex-wrap">
+                {allImages.map((img, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setActiveImg(i)}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${activeImg === i ? 'border-blue-600' : 'border-gray-200 hover:border-gray-400'}`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="detail-actions">
-              <button className={`btn btn-lg btn-primary${added ? ' btn-success' : ''}`} onClick={handleAddToCart} style={{ flex: 1 }}>
-                {added ? '✓ Đã thêm vào giỏ' : '🛒 Thêm vào giỏ hàng'}
-              </button>
-              <button className="btn btn-lg btn-outline" onClick={handleBuyNow} style={{ flex: 1 }}>
-                Mua ngay
-              </button>
-            </div>
+            {/* Info */}
+            <div>
+              <p className="text-sm text-blue-600 font-medium mb-1">{product.brand}</p>
+              <h1 className="text-2xl font-bold text-gray-800 mb-3">{product.name}</h1>
 
-            {/* Policies */}
-            <div className="detail-policies">
-              {[['✅', 'Chính hãng 100%'], ['🔄', 'Đổi trả 30 ngày'], ['🛡️', 'Bảo hành 12 tháng'], ['🚚', 'Miễn phí giao hàng']].map(([icon, text]) => (
-                <div key={text} className="policy-item"><span>{icon}</span><span>{text}</span></div>
-              ))}
+              <div className="flex items-center gap-3 mb-4">
+                <Rate disabled value={product.rating} allowHalf />
+                <span className="font-semibold">{product.rating}</span>
+                <span className="text-gray-400 text-sm">({product.reviewCount} đánh giá)</span>
+                <Tag color={selectedVariant?.stock > 0 ? 'green' : 'red'}>
+                  {selectedVariant ? `Còn ${selectedVariant.stock} sản phẩm` : `Còn ${product.stock} sp`}
+                </Tag>
+              </div>
+
+              <div className="text-3xl font-bold text-blue-600 mb-4">
+                {formatPrice(selectedVariant?.price || product.basePrice)}
+              </div>
+
+              <p className="text-gray-600 text-sm leading-relaxed mb-5">{product.description}</p>
+
+              {product.variants.length > 0 && (
+                <div className="mb-5">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Phiên bản: <strong>{selectedVariant?.label}</strong></p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map(v => (
+                      <button
+                        key={v.id}
+                        onClick={() => setSelectedVariant(v)}
+                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                          selectedVariant?.id === v.id
+                            ? 'border-blue-600 bg-blue-50 text-blue-600'
+                            : 'border-gray-300 text-gray-700 hover:border-blue-400'
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mb-5">
+                <span className="text-sm font-medium text-gray-700">Số lượng:</span>
+                <InputNumber min={1} value={qty} onChange={v => setQty(v || 1)} className="w-24" />
+              </div>
+
+              <div className="flex gap-3 mb-6">
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={added ? <CheckCircleOutlined /> : <ShoppingCartOutlined />}
+                  onClick={handleAddToCart}
+                  className="flex-1"
+                  style={added ? { background: '#10b981', borderColor: '#10b981' } : {}}
+                >
+                  {added ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+                </Button>
+                <Button size="large" icon={<ThunderboltOutlined />} onClick={handleBuyNow} className="flex-1">
+                  Mua ngay
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {[['✅','Chính hãng 100%'],['🔄','Đổi trả 30 ngày'],['🛡️','Bảo hành 12 tháng'],['🚚','Miễn phí giao hàng']].map(([icon, text]) => (
+                  <div key={text} className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-2.5">
+                    <span>{icon}</span><span>{text}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Specs + Reviews */}
-        <div className="detail-bottom">
-          {/* Specs */}
-          {product.specs && Object.keys(product.specs).length > 0 && (
-            <div className="card detail-specs">
-              <div className="card-header"><span className="font-semibold text-lg">Thông số kỹ thuật</span></div>
-              <div className="card-body">
-                <table className="specs-table">
+          {/* Specs + Reviews */}
+          <div className="grid grid-cols-2 gap-6 mt-10 md:grid-cols-1">
+            {product.specs && Object.keys(product.specs).length > 0 && (
+              <Card title="Thông số kỹ thuật">
+                <table className="w-full text-sm">
                   <tbody>
                     {Object.entries(product.specs).map(([k, v]) => (
-                      <tr key={k}>
-                        <td className="specs-key">{k}</td>
-                        <td>{v}</td>
+                      <tr key={k} className="border-b border-gray-100 last:border-0">
+                        <td className="py-2 pr-4 text-gray-500 w-2/5">{k}</td>
+                        <td className="py-2 font-medium text-gray-800">{v}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
+              </Card>
+            )}
 
-          {/* Reviews */}
-          <div className="card">
-            <div className="card-header"><span className="font-semibold text-lg">Đánh giá từ khách hàng</span></div>
-            <div className="card-body">
+            <Card title={`Đánh giá từ khách hàng (${reviews.length})`}>
               {reviews.length === 0 ? (
-                <div className="empty-state"><div className="empty-state-icon">💬</div><p>Chưa có đánh giá nào</p></div>
+                <div className="text-center py-8 text-gray-400">
+                  <div className="text-4xl mb-2">💬</div>
+                  <p>Chưa có đánh giá nào</p>
+                </div>
               ) : (
-                <div className="reviews-list">
+                <div className="flex flex-col gap-4">
                   {reviews.map(r => (
-                    <div key={r.id} className="review-item">
-                      <div className="review-header">
-                        <div className="review-avatar">{r.customerName[0]}</div>
-                        <div>
-                          <p className="review-name">{r.customerName} {r.verified && <span className="badge badge-green text-sm">Đã mua</span>}</p>
-                          <StarRating rating={r.rating} />
+                    <div key={r.id} className="border-b border-gray-100 pb-4 last:border-0">
+                      <div className="flex items-start gap-3 mb-2">
+                        <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                          {r.customerName[0]}
                         </div>
-                        <span className="review-date text-sm text-gray">{r.date}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{r.customerName}</span>
+                            {r.verified && <Tag color="green" className="text-xs">Đã mua</Tag>}
+                            <span className="text-xs text-gray-400 ml-auto">{r.date}</span>
+                          </div>
+                          <Rate disabled value={r.rating} className="text-xs" />
+                        </div>
                       </div>
-                      <p className="review-comment">{r.comment}</p>
+                      <p className="text-sm text-gray-600 ml-12">{r.comment}</p>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         </div>
       </div>
-    </div>
-    <ToastContainer toasts={toasts} />
+      <ToastContainer toasts={toasts} />
     </>
   );
 }

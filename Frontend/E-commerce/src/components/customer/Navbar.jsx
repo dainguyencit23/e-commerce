@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Badge, Dropdown, Input } from 'antd';
+import { ShoppingCartOutlined, UserOutlined, SearchOutlined, MenuOutlined } from '@ant-design/icons';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { categories } from '../../data/mockData';
-import './Navbar.css';
 
 export default function Navbar() {
   const { totalItems } = useCart();
@@ -11,69 +12,83 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (search.trim()) navigate(`/products?q=${encodeURIComponent(search.trim())}`);
+  const handleSearch = (value) => {
+    if (value.trim()) navigate(`/products?q=${encodeURIComponent(value.trim())}`);
   };
 
   const handleLogout = () => { logout(); navigate('/'); };
 
-  return (
-    <header className="navbar">
-      <div className="container">
-        <div className="navbar-inner">
-          {/* Logo */}
-          <Link to="/" className="navbar-logo">🛒 <span>TechShop</span></Link>
+  const userMenuItems = [
+    ...(user?.role === 'admin' ? [{ key: 'admin', label: <Link to="/admin/dashboard">Admin Panel</Link> }] : []),
+    ...(user?.role === 'staff' ? [{ key: 'staff', label: <Link to="/staff/orders">Staff Panel</Link> }] : []),
+    { key: 'account', label: <Link to="/account">Tài khoản</Link> },
+    { key: 'orders', label: <Link to="/orders">Đơn hàng</Link> },
+    { type: 'divider' },
+    { key: 'logout', label: <span className="text-red-500" onClick={handleLogout}>Đăng xuất</span> },
+  ];
 
-          {/* Search */}
-          <form className="navbar-search" onSubmit={handleSearch}>
-            <input
-              type="text"
+  return (
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
+      <div className="container">
+        <div className="flex items-center gap-4 h-16">
+          <Link to="/" className="flex items-center gap-1.5 text-blue-600 font-bold text-lg flex-shrink-0">
+            🛒 <span>TechShop</span>
+          </Link>
+
+          <div className="flex-1 max-w-xl">
+            <Input.Search
               placeholder="Tìm kiếm sản phẩm..."
               value={search}
               onChange={e => setSearch(e.target.value)}
+              onSearch={handleSearch}
+              prefix={<SearchOutlined className="text-gray-400" />}
+              allowClear
             />
-            <button type="submit">🔍</button>
-          </form>
+          </div>
 
-          {/* Actions */}
-          <div className="navbar-actions">
-            <Link to="/cart" className="navbar-cart">
-              🛒
-              {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+          <div className="flex items-center gap-3">
+            <Link to="/cart">
+              <Badge count={totalItems} size="small">
+                <ShoppingCartOutlined className="text-2xl text-gray-600 hover:text-blue-600 transition-colors" />
+              </Badge>
             </Link>
+
             {user ? (
-              <div
-                className="navbar-user"
-                onMouseEnter={() => setDropdownOpen(true)}
-                onMouseLeave={() => setDropdownOpen(false)}
-                onClick={()=> setDropdownOpen(true)}
-              >
-                <span className="navbar-user-name">{user.name.split(' ').slice(-1)[0]}</span>
-                {dropdownOpen && (
-                  <div className="navbar-dropdown">
-                    {user.role === 'admin' && <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)}>Admin Panel</Link>}
-                    {user.role === 'staff' && <Link to="/staff/orders" onClick={() => setDropdownOpen(false)}>Staff Panel</Link>}
-                    <Link to="/account" onClick={() => setDropdownOpen(false)}>Tài khoản</Link>
-                    <Link to="/orders" onClick={() => setDropdownOpen(false)}>Đơn hàng</Link>
-                    <button onClick={() => { setDropdownOpen(false); handleLogout(); }}>Đăng xuất</button>
+              <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="bottomRight">
+                <button className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600 transition-colors text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                    {user.name[0]}
                   </div>
-                )}
-              </div>
+                  <span className="hide-mobile">{user.name.split(' ').slice(-1)[0]}</span>
+                </button>
+              </Dropdown>
             ) : (
-              <Link to="/login" className="btn btn-primary btn-sm">Đăng nhập</Link>
+              <Link to="/login" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
+                Đăng nhập
+              </Link>
             )}
-            <button className="navbar-toggle" onClick={() => setMenuOpen(p => !p)}>☰</button>
+
+            <button
+              className="p-1.5 text-gray-600 hover:text-blue-600 transition-colors md:hidden"
+              onClick={() => setMenuOpen(p => !p)}
+            >
+              <MenuOutlined />
+            </button>
           </div>
         </div>
 
-        {/* Category nav */}
-        <nav className={`navbar-cats ${menuOpen ? 'open' : ''}`}>
-          <Link to="/products">Tất cả sản phẩm</Link>
+        <nav className={`pb-2 flex gap-4 overflow-x-auto text-sm ${menuOpen ? 'flex' : 'hidden md:flex'}`}>
+          <Link to="/products" className="text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            Tất cả sản phẩm
+          </Link>
           {categories.map(cat => (
-            <Link key={cat.id} to={`/products?category=${cat.id}`} onClick={() => setMenuOpen(false)}>
+            <Link
+              key={cat.id}
+              to={`/products?category=${cat.id}`}
+              className="text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
               {cat.name}
             </Link>
           ))}

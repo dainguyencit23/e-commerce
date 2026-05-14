@@ -1,27 +1,50 @@
-// using E_commerce.DTOs.Image;
-// using Microsoft.AspNetCore.Mvc;
+using Azure.Core;
+using E_commerce.DTOs.Image;
+using E_commerce.Helpers;
+using E_commerce.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
-// namespace E_commerce.Controllers.ProductImageController
-// {
-//     [ApiController]
-//     [Route("api/[controller]")]
-//     public class ProductImageController : ControllerBase
-//     {
-//         // POST api/products/{id}/images
-//         [HttpPost("products/{id}/images")]
-//         public async Task<IActionResult> AddImage(Guid id, AddImageRequest request)
-//         {
-//             // 1. Tìm product, NotFound nếu không có
-//             // 2. Tạo ProductImage với ProductId = id, ImageUrl = request.ImageUrl
-//             // 3. SaveChangesAsync, return Ok
-//         }
+namespace E_commerce.Controllers
+{
+    [ApiController]
+    [Route("api")]
+    public class ProductImageController : ControllerBase
+    {
+        private readonly IProductImageService _productImageService;
+        public ProductImageController(IProductImageService productImageService)
+        {
+            _productImageService = productImageService;
+        }
+        // POST api/products/{id}/images
+        [HttpPost("products/{id}/images")]
+        [Authorize(Roles = "Admin, Staff")]
+        public async Task<IActionResult> AddImage(Guid id, AddImageRequest request)
+        {
+            try
+            {
+                await _productImageService.AddImageAsync(id, request);
+                return Ok(BaseResponse<string>.Ok(string.Empty, "Add URL image successfully."));
+            }catch (KeyNotFoundException ex)
+            {
+                return NotFound(BaseResponse<string>.Fail(ex.Message, 404));
+            }
+        }
 
-//         // DELETE api/images/{id}
-//         [HttpDelete("images/{id}")]
-//         public async Task<IActionResult> DeleteImage(Guid id)
-//         {
-//             // ⚠️ PK của ProductImage là ProductImageId (không phải Id)
-//             // Dùng: _context.ProductImages.FirstOrDefaultAsync(i => i.ProductImageId == id)
-//         }
-//     }
-// }
+        // DELETE api/images/{id}
+        [HttpDelete("images/{id}")]
+        [Authorize(Roles = "Admin, Staff")]
+        public async Task<IActionResult> DeleteImage(Guid id)
+        {
+            try
+            {
+               await _productImageService.DeleteImageAsync(id);
+                return Ok(BaseResponse<string>.Ok(string.Empty, "Delete URL image successfully."));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(BaseResponse<string>.Fail(ex.Message, 404));
+            }
+        }
+    }
+}

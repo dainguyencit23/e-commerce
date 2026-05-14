@@ -1,81 +1,105 @@
 import { useNavigate } from 'react-router-dom';
+import { Button, Card, Divider, InputNumber, Empty, Tag } from 'antd';
+import { DeleteOutlined, ShoppingOutlined } from '@ant-design/icons';
 import { useCart } from '../../context/CartContext';
 import { formatPrice } from '../../data/mockData';
-import {useAuth} from "../../context/AuthContext"
-import './CartPage.css';
+import { useAuth } from '../../context/AuthContext';
 
 export default function CartPage() {
   const { items, removeFromCart, updateQty, subtotal } = useCart();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const shipping = subtotal >= 5000000 ? 0 : 30000;
   const total = subtotal + shipping;
-  const {user} = useAuth();
+
   if (items.length === 0) {
     return (
-      <div className="cart-page">
+      <div className="py-8 pb-16">
         <div className="container">
-          <h1 className="page-title">Giỏ hàng</h1>
-          <div className="empty-state">
-            <div className="empty-state-icon">🛒</div>
-            <p className="empty-state-text">{user? "Giỏ hàng của bạn đang trống" : "Vui lòng đăng nhập để xem giỏ hàng."}</p>
-            <button className="btn btn-primary mt-4" onClick={() => navigate('/products')}>Tiếp tục mua sắm</button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">Giỏ hàng</h1>
+          <Empty
+            image={<ShoppingOutlined className="text-6xl text-gray-300" />}
+            description={user ? 'Giỏ hàng của bạn đang trống' : 'Vui lòng đăng nhập để xem giỏ hàng.'}
+            className="py-16"
+          >
+            <Button type="primary" onClick={() => navigate('/products')}>Tiếp tục mua sắm</Button>
+          </Empty>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="cart-page">
+    <div className="py-8 pb-16">
       <div className="container">
-        <h1 className="page-title">Giỏ hàng ({items.length} sản phẩm)</h1>
-        <div className="cart-layout">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Giỏ hàng ({items.length} sản phẩm)</h1>
+
+        <div className="grid grid-cols-[1fr_320px] gap-6 md:grid-cols-1">
           {/* Items */}
-          <div className="cart-items">
+          <div className="flex flex-col gap-3">
             {items.map(item => (
-              <div key={item.variantId} className="cart-item">
-                <img src={item.thumbnail} alt={item.name} className="cart-item-img" />
-                <div className="cart-item-info">
-                  <p className="cart-item-name">{item.name}</p>
-                  <p className="cart-item-variant text-sm text-gray">{item.variant}</p>
-                  <p className="cart-item-price">{formatPrice(item.price)}</p>
+              <div key={item.variantId} className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
+                <img
+                  src={item.thumbnail}
+                  alt={item.name}
+                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0 bg-gray-100"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-800 truncate">{item.name}</p>
+                  <p className="text-sm text-gray-500">{item.variant}</p>
+                  <p className="text-blue-600 font-bold mt-1">{formatPrice(item.price)}</p>
                 </div>
-                <div className="qty-control">
-                  <button onClick={() => updateQty(item.variantId, item.qty - 1)}>−</button>
-                  <span>{item.qty}</span>
-                  <button onClick={() => updateQty(item.variantId, item.qty + 1)}>+</button>
-                </div>
-                <p className="cart-item-total">{formatPrice(item.price * item.qty)}</p>
-                <button className="cart-item-remove" onClick={() => removeFromCart(item.variantId)}>✕</button>
+                <InputNumber
+                  min={1}
+                  value={item.qty}
+                  onChange={v => updateQty(item.variantId, v || 1)}
+                  className="w-20"
+                  size="small"
+                />
+                <p className="font-bold text-gray-800 w-24 text-right">{formatPrice(item.price * item.qty)}</p>
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => removeFromCart(item.variantId)}
+                />
               </div>
             ))}
           </div>
 
           {/* Summary */}
-          <div className="cart-summary card">
-            <div className="card-header"><span className="font-semibold">Tóm tắt đơn hàng</span></div>
-            <div className="card-body">
-              <div className="summary-row">
-                <span>Tạm tính</span>
-                <span>{formatPrice(subtotal)}</span>
+          <div className="self-start">
+            <Card title="Tóm tắt đơn hàng">
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tạm tính</span>
+                  <span>{formatPrice(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Phí vận chuyển</span>
+                  <span>
+                    {shipping === 0
+                      ? <Tag color="green">Miễn phí</Tag>
+                      : formatPrice(shipping)
+                    }
+                  </span>
+                </div>
+                {shipping === 0 && (
+                  <p className="text-xs text-green-600">✓ Miễn phí vận chuyển đơn từ 5 triệu</p>
+                )}
+                <Divider className="my-2" />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Tổng cộng</span>
+                  <span className="text-blue-600">{formatPrice(total)}</span>
+                </div>
+                <Button type="primary" size="large" block className="mt-4" onClick={() => navigate('/checkout')}>
+                  Thanh toán →
+                </Button>
+                <Button block onClick={() => navigate('/products')}>
+                  Tiếp tục mua sắm
+                </Button>
               </div>
-              <div className="summary-row">
-                <span>Phí vận chuyển</span>
-                <span>{shipping === 0 ? <span className="text-success">Miễn phí</span> : formatPrice(shipping)}</span>
-              </div>
-              {shipping === 0 && <p className="text-sm text-success" style={{marginBottom:8}}>✓ Miễn phí vận chuyển đơn từ 5 triệu</p>}
-              <div className="divider" />
-              <div className="summary-row summary-total">
-                <span>Tổng cộng</span>
-                <span>{formatPrice(total)}</span>
-              </div>
-              <button className="btn btn-primary w-full btn-lg mt-4" onClick={() => navigate('/checkout')}>
-                Thanh toán →
-              </button>
-              <button className="btn btn-secondary w-full mt-2" onClick={() => navigate('/products')}>
-                Tiếp tục mua sắm
-              </button>
-            </div>
+            </Card>
           </div>
         </div>
       </div>
