@@ -37,7 +37,7 @@ builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegisterService, RegisterService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-
+builder.Services.AddScoped<IReportService, ReportService>();
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 
