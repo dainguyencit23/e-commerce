@@ -19,6 +19,7 @@ namespace E_commerce.Services
         public async Task<List<PaymentMethodResponse>> GetAllAsync()
         {
             var paymentMethods = await _context.PaymentMethods
+                .Where(pm => pm.IsActive)
                 .Select(pm => new PaymentMethodResponse
                 {
                     Id = pm.Id,
@@ -62,6 +63,19 @@ namespace E_commerce.Services
             paymentMethod.Name = request.Name;
             paymentMethod.Description = request.Description;
             paymentMethod.IsActive = request.IsActive;
+
+            await _context.SaveChangesAsync();
+        }
+        // Soft delete payment method
+        public async Task DeleteAsync(Guid id)
+        {
+            var paymentMethod = await _context.PaymentMethods
+                .FirstOrDefaultAsync(pm => pm.Id == id);
+
+            if (paymentMethod == null)
+                throw new KeyNotFoundException("Payment method not found");
+
+            paymentMethod.IsActive = false;
 
             await _context.SaveChangesAsync();
         }
