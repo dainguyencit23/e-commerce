@@ -12,5 +12,6 @@ namespace E_commerce.Services.Interfaces
             Guid id,
             UpdatePaymentMethodRequest request
         );
+        Task DeleteAsync(Guid id);
     }
 }
