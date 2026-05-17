@@ -7,17 +7,11 @@ using System.Security.Claims;
 namespace E_commerce.Controllers
 {
     [Authorize]
-    // TEMP: Disable Authorize because Login API is not working yet
-    // TODO: Restore [Authorize] after JWT/Auth is fixed
-
     [ApiController]
     [Route("api/cart")]
     public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
-
-        // TEMP TEST USER ID
-        // Replace after JWT login works
 
         public CartController(ICartService cartService)
         {
@@ -28,7 +22,9 @@ namespace E_commerce.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCart()
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value
+            );
 
             var cart = await _cartService.GetCartAsync(userId);
 
@@ -42,7 +38,9 @@ namespace E_commerce.Controllers
         [HttpPost("items")]
         public async Task<IActionResult> AddItem(AddCartItem dto)
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value
+            );
 
             var result = await _cartService.AddItemAsync(userId, dto);
 
@@ -83,7 +81,9 @@ namespace E_commerce.Controllers
         [HttpDelete]
         public async Task<IActionResult> ClearCart()
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value
+            );
 
             var result = await _cartService.ClearCartAsync(userId);
 
