@@ -39,6 +39,7 @@ namespace E_commerce.Services.Implementations
                 {
                     Id = ci.Id,
                     ProductVariantId = ci.ProductVariantId,
+                    ProductId = ci.ProductVariant.ProductId,
                     ProductName = ci.ProductVariant.Product != null ? ci.ProductVariant.Product.Name : string.Empty,
                     ProductVariantName = ci.ProductVariant.Name,
                     Price = ci.ProductVariant.Price,

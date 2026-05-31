@@ -130,7 +130,11 @@ export default function AccountPage() {
       setAddrModal(false);
       loadAddresses();
       message.success('Đã lưu địa chỉ');
-    } catch { message.error('Lưu thất bại'); }
+    } catch (err) {
+      const msg =  'Lưu thất bại';
+      message.error(msg);
+    }
+
   };
 
   const sideNav = [

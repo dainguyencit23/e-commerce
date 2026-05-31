@@ -67,6 +67,8 @@ export default function HomePage() {
     link: `/products/${p.id}`,
     bg: BG_GRADIENTS[i % BG_GRADIENTS.length],
   }));
+  console.log("products: ", featured);
+  console.log("get featured products: ", getFeaturedProducts)
 
   useEffect(() => {
     if (slides.length === 0) return;

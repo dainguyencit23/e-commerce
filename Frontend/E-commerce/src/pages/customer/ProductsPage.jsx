@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Select, Button, Rate, Empty, Radio, InputNumber, Card } from 'antd';
+import { Select, Button, Rate, Empty, Radio, InputNumber, Card, Pagination } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
 import { useProducts } from '../../context/ProductContext';
 import { useCategories } from '../../context/CategoryContext'
@@ -19,10 +19,14 @@ export default function ProductsPage() {
   const [priceMax, setPriceMax] = useState('');
   const [brandName, setbrandName] = useState('');
   const { products } = useProducts();
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
 
+  console.log("products: ", products)
   const brandNames = [...new Set(products.map(p => p.brandName))];
 
   const filtered = useMemo(() => {
+    setCurrentPage(1);
     let list = [...products];
     if (categoryParam) list = list.filter(p => p.categoryName === categoryParam);
     if (query) list = list.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.brandName.toLowerCase().includes(query.toLowerCase()));
@@ -34,6 +38,11 @@ export default function ProductsPage() {
     if (sort === 'averageRating') list.sort((a, b) => b.averageRating - a.averageRating);
     return list;
   }, [categoryParam, query, sort, priceMin, priceMax, brandName, products]);
+
+  const paginatedProducts = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const selectedCategory = categories.find(c => c.name === categoryParam);
 
@@ -114,7 +123,7 @@ export default function ProductsPage() {
               </Empty>
             ) : (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-5">
-                {filtered.map(p => (
+                {paginatedProducts.map(p => (
                   <div key={p.id} className="product-card relative" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-card-img">
                       <img src={p.imageUrls?.[0]} alt={p.name} /> 
@@ -129,6 +138,20 @@ export default function ProductsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {filtered.length > ITEMS_PER_PAGE && (
+              <div className="flex justify-center mt-8">
+                <Pagination
+                  current={currentPage}
+                  pageSize={ITEMS_PER_PAGE}
+                  total={filtered.length}
+                  onChange={(page) => {
+                    setCurrentPage(page);
+                    window.scrollTo(0, 0);
+                  }}
+                />
               </div>
             )}
           </div>

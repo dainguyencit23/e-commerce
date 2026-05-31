@@ -20,7 +20,7 @@ namespace E_commerce.DTOs.Products
         // chia dữ liệu thành từng trang nhỏ thay vì lấy all cùng lúc
         [Range(1, int.MaxValue)]
         public int Page { get; set; } = 1;
-        [Range(1, 100, ErrorMessage = "The maximum page size is 100")]
+        [Range(1, 1000, ErrorMessage = "The maximum page size is 100")]
         public int PageSize { get; set; } = 10;
 
     }

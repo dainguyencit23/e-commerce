@@ -14,10 +14,20 @@ export default function ProductDetailPage() {
   const { addToCart} = useCart();
   const { user } = useAuth();
   const { toasts, show: showToast } = useToast();
-  const { getProductById } = useProducts();
+  const { getProductById, refreshProduct } = useProducts();
   const [reviews, setReviews] = useState([]);
   const product = getProductById(id);
-  const [selectedVariant, setSelectedVariant] = useState(product?.variants[0] || null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+
+  useEffect(() => {
+    if (id) refreshProduct(id);
+  }, [id]);
+
+  useEffect(() => {
+    if (product?.variants?.length > 0 && !selectedVariant) {
+      setSelectedVariant(product.variants[0]);
+    }
+  }, [product]);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [added, setAdded] = useState(false);
