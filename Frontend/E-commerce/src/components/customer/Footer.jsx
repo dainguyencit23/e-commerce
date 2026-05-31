@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useCategories } from '../../context/CategoryContext';
+
 
 export default function Footer() {
+  const { categories } = useCategories();
+
   return (
     <footer className="bg-gray-900 text-gray-400 py-10 mt-auto">
       <div className="container">
@@ -17,10 +21,17 @@ export default function Footer() {
 
           <div className="flex flex-col gap-2">
             <h4 className="text-white font-semibold mb-1">Sản phẩm</h4>
-            {[['1','Điện thoại'],['2','Laptop'],['4','Tai nghe'],['5','Đồng hồ thông minh'],['6','Phụ kiện']].map(([id,name]) => (
-              <Link key={id} to={`/products?category=${id}`} className="text-sm hover:text-white transition-colors">{name}</Link>
+            {categories.map(cat => (
+              <Link
+                key={cat.id}
+                to={`/products?category=${encodeURIComponent(cat.name)}`}
+                className="text-sm hover:text-white transition-colors"
+              >
+                {cat.name}
+              </Link>
             ))}
           </div>
+
 
           <div className="flex flex-col gap-2">
             <h4 className="text-white font-semibold mb-1">Hỗ trợ</h4>

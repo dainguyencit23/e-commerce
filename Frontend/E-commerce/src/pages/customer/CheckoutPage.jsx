@@ -5,12 +5,17 @@ import { useCart } from '../../context/CartContext';
 import paymentMethodApi from '../../api/paymentMethodApi';
 import orderApi from '../../api/orderApi';
 import shippingAddressApi from '../../api/shippingAddressApi';
+import voucherApi from '../../api/voucherApi';
+import {useProducts} from '../../context/ProductContext';
 
 
 export default function CheckoutPage() {
   const { items, clearCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [voucherValid, setVoucherValid] = useState(false);
+  const {refreshProduct} = useProducts();
 
   // selectedItemIds từ CartPage hoặc Buy Now
   const selectedItemIds = location.state?.selectedItemIds ?? null;
@@ -31,7 +36,7 @@ export default function CheckoutPage() {
 
   const subtotal = checkoutItems.reduce((s, i) => s + i.price * i.quantity, 0);
   const shipping = subtotal >= 5000000 ? 0 : 30000;
-  const total = subtotal + shipping;
+  const total = subtotal - discountAmount + shipping;
 
   useEffect(() => {
     paymentMethodApi.getAll().then(res => {
@@ -58,6 +63,8 @@ export default function CheckoutPage() {
         voucherCode: coupon || null,
         cartItemIds: selectedItemIds ?? null,
       });
+      const productIds = [...new Set(checkoutItems.map(i => i.productId))];
+	    await Promise.all(productIds.map(id => refreshProduct(id)));
       if (!selectedItemIds) await clearCart();
       navigate('/orders', { state: { justOrdered: true } });
     } catch (e) {
@@ -127,16 +134,6 @@ export default function CheckoutPage() {
                         + Quản lý địa chỉ
                       </Button>
                     </div>
-                    <div className="mt-5">
-                      <Button
-                        type="primary"
-                        size="large"
-                        disabled={!selectedAddrId}
-                        onClick={() => setStep(1)}
-                      >
-                        Tiếp tục →
-                      </Button>
-                    </div>
                   </>
                 )}
               </Card>
@@ -156,12 +153,7 @@ export default function CheckoutPage() {
                     ))}
                   </div>
                 </Radio.Group>
-                <div className="flex gap-3 mt-5">
-                  <Button onClick={() => setStep(0)}>← Quay lại</Button>
-                  <Button type="primary" size="large" onClick={() => setStep(2)} disabled={!payMethod}>
-                    Xem lại đơn →
-                  </Button>
-                </div>
+                
               </Card>
             )}
 
@@ -197,10 +189,7 @@ export default function CheckoutPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-3">
-                    <Button onClick={() => setStep(1)}>← Quay lại</Button>
-                    <Button type="primary" size="large" onClick={handleOrder}>✓ Đặt hàng</Button>
-                  </div>
+                  
                 </div>
               </Card>
             )}
@@ -231,10 +220,28 @@ export default function CheckoutPage() {
                 <Input
                   placeholder="Mã giảm giá"
                   value={coupon}
-                  onChange={e => { setCoupon(e.target.value.toUpperCase()); setCouponMsg(''); }}
+                  onChange={e => {
+                    setCoupon(e.target.value.toUpperCase());
+                    setCouponMsg('');
+                    setDiscountAmount(0); 
+                    setVoucherValid(false); 
+                  }}
                   size="small"
                 />
-                <Button size="small" onClick={() => setCouponMsg(coupon ? '✅ Mã sẽ được áp dụng khi đặt hàng' : '❌ Vui lòng nhập mã')}>
+                <Button size="small" 
+                  onClick={async () => {
+                  if (!coupon) { setCouponMsg('❌ Vui lòng nhập mã'); return; }
+                  try {
+                    const res = await voucherApi.validate({ code: coupon, orderAmount: subtotal });
+                    setDiscountAmount(res.data.discountAmount);
+                    setVoucherValid(true);
+                    setCouponMsg(`✅ Giảm ${formatPrice(res.data.discountAmount)}`);
+                  } catch {
+                    setDiscountAmount(0);
+                    setVoucherValid(false);
+                    setCouponMsg('❌ Mã không hợp lệ hoặc không đủ điều kiện');
+                  }
+                }}>
                   Áp dụng
                 </Button>
               </div>
@@ -252,12 +259,50 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-sm mb-1.5">
                 <span className="text-gray-600">Vận chuyển</span>
                 <span>{shipping === 0 ? <Tag color="green">Miễn phí</Tag> : formatPrice(shipping)}</span>
+                
               </div>
+              {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm mb-1.5 text-green-600">
+                    <span>Giảm giá ({coupon})</span>
+                    <span>- {formatPrice(discountAmount)}</span>
+                  </div>
+                )}
               <Divider className="my-3" />
               <div className="flex justify-between font-bold text-lg">
                 <span>Tổng cộng</span>
                 <span className="text-blue-600">{formatPrice(total)}</span>
               </div>
+              {/* Action bar */}
+              <div className="mt-6 flex justify-between items-center border-t pt-6">
+                <div>
+                  {step > 0 && (
+                    <Button size="large" onClick={() => setStep(step - 1)}>
+                      ← Quay lại
+                    </Button>
+                  )}
+                </div>
+                <div>
+                  {step === 0 && (
+                    <Button type="primary" size="large"
+                      disabled={!selectedAddrId}
+                      onClick={() => setStep(1)}>
+                      Tiếp tục →
+                    </Button>
+                  )}
+                  {step === 1 && (
+                    <Button type="primary" size="large"
+                      disabled={!payMethod}
+                      onClick={() => setStep(2)}>
+                      Xem lại đơn →
+                    </Button>
+                  )}
+                  {step === 2 && (
+                    <Button type="primary" size="large" onClick={handleOrder}>
+                      ✓ Đặt hàng
+                    </Button>
+                  )}
+                </div>
+</div>
             </Card>
           </div>
         </div>

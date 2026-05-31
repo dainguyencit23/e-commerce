@@ -9,6 +9,7 @@
         // Id của ProductVariant
         public Guid ProductVariantId { get; set; }
 
+        public Guid ProductId { get; set; } 
         // Tên Product
         public string ProductName { get; set; } = string.Empty;
 

@@ -9,7 +9,7 @@ export function ProductProvider({ children }) {
 	useEffect(() => {
 		const fetchProducts = async () => {
 			try {
-				const res = await productAPi.getAll();
+				const res = await productAPi.getAll({pageSize: 1000});
 				setProducts(res.data.items);
 			}
 			catch (err) {
@@ -24,12 +24,12 @@ export function ProductProvider({ children }) {
 	const addProduct = async (data) => {
 		await productAPi.create(data);
 		// reload lại products
-		const res = await productAPi.getAll();
+		const res = await productAPi.getAll({pageSize: 1000});
 		setProducts(res.data?.items || []);
 	};
 	const updateProduct = async (id, data) => {
 		await productAPi.update(id, data);
-		const res = await productAPi.getAll({ pageSize: 100 });
+		const res = await productAPi.getAll({ pageSize: 1000 });
 		setProducts(res.data?.items || []);
 	};
 
@@ -38,12 +38,23 @@ export function ProductProvider({ children }) {
 		setProducts(prev => prev.filter(p => p.id !== id));
 	};
 
+	
+	const refreshProduct = async (id) => {
+		try {
+			const res = await productAPi.getById(id);
+			const updated = res.data;
+			setProducts(prev => prev.map(p => p.id === id ? updated : p));
+		} catch (err) {
+			console.error('Failed to refresh product:', err);
+		}
+	};
+
 	const getFeaturedProducts = () => products.slice(0, 8);
 	const getProductBySlug = (slug) => products.find(p => p.slug === slug);
 	const getProductById = (id) => products.find(p => p.id === id)
 
 	return (
-		<ProductContext.Provider value={{ products, loading, getProductById, getFeaturedProducts, addProduct, updateProduct, deleteProduct }}>
+		<ProductContext.Provider value={{ products, loading, getProductById, getFeaturedProducts, addProduct, updateProduct, deleteProduct, refreshProduct }}>
 			{children}
 		</ProductContext.Provider>
 	);
