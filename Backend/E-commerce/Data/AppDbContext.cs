@@ -23,7 +23,7 @@ namespace E_commerce.Data
         public DbSet<Voucher> Vouchers { get; set; }
         public DbSet<SupportRequest> SupportRequests { get; set; }
         public DbSet<ShippingAddress> ShippingAddresses { get; set; }
-
+        public DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

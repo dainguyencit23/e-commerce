@@ -59,12 +59,12 @@ namespace E_commerce.Controllers
         // GET api/orders/my 
         [HttpGet("my")]
         [Authorize(Roles = "Customer")]
-        public async Task<IActionResult> GetMyOrders()
+        public async Task<IActionResult> GetMyOrders([FromQuery] OrderFilterRequest filter)
         {
             try
             {
                 var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var orders = await _orderService.GetMyOrders(userId);
+                var orders = await _orderService.GetMyOrders(userId, filter);
                 return Ok(BaseResponse<List<OrderResponse>>.Ok(orders));
             }
             catch (Exception ex)

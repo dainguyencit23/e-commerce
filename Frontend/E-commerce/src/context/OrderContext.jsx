@@ -7,10 +7,10 @@ export function OrderProvider({ children }) {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(false)
 
-  const fetchMyOrders = async () => {
+  const fetchMyOrders = async (params = {}) => {
     setLoading(true)
     try {
-      const res = await orderApi.getMyOrders()
+      const res = await orderApi.getMyOrders(params)
       setOrders(res.data)
     } finally { setLoading(false) }
   }

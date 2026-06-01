@@ -10,5 +10,6 @@
         public decimal UnitPrice { get; set; }
         public decimal TotalPayment { get; set; }
         public decimal TotalPrice { get; internal set; }
+        public string ImageUrl { get; set; } = string.Empty;
     }
 }

@@ -16,7 +16,7 @@ export default function StaffOrderPage() {
   useEffect(() => { fetchAllOrders(); }, []);
 
   const filtered = statusFilter === 'all' ? orders : orders.filter(o => o.status === Number(statusFilter))
-    .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+    .sort((a, b) => new Date(a.orderDate) - new Date(b.orderDate));
 
   const tabItems = [
     { key: 'all', label: `Tất cả (${orders.length})` },

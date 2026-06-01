@@ -1,4 +1,5 @@
 ﻿using E_commerce.Data;
+using E_commerce.DTOs.Notification;
 using E_commerce.DTOs.Order;
 using E_commerce.Models;
 using E_commerce.Repositories;
@@ -7,6 +8,7 @@ using E_commerce.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using E_commerce.DTOs.Notification;
 
 namespace E_commerce.Services
 {
@@ -17,19 +19,22 @@ namespace E_commerce.Services
         private readonly IVoucherRepository _voucherRepo;
         private readonly ICartService _cartService;
         private readonly AppDbContext _context;
+        private readonly INotificationService _notificationService;
 
         public OrderService(
             IOrderRepository orderRepository,
             IProductVariantRepository variantRepository,
             IVoucherRepository voucherRepository,
             ICartService cartService,
-            AppDbContext context)
+            AppDbContext context,
+            INotificationService notificationService)
         {
             _orderRepo = orderRepository;
             _variantRepo = variantRepository;
             _voucherRepo = voucherRepository;
             _cartService = cartService;
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<List<OrderResponse>> GetAllOrders()
@@ -37,11 +42,19 @@ namespace E_commerce.Services
             var result = await _orderRepo.GetAll();
             return result.Select(o => MapToResponse(o)).ToList();
         }
-        public async Task<List<OrderResponse>> GetMyOrders(Guid userId)
+        public async Task<List<OrderResponse>> GetMyOrders(Guid userId, OrderFilterRequest? filter = null)
             
         {
             var result = await _orderRepo.GetByUserId(userId);
-            return result.Select(o => MapToResponse(o)).ToList();
+            if (filter?.Status.HasValue == true)
+            {
+                result = result.Where(o => (int) o.Status == filter.Status.Value).ToList();
+            }
+            return result
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => MapToResponse(o))
+                .ToList();
+
         }
         public async Task<OrderResponse> GetOrderById(Guid id)
         {
@@ -139,6 +152,15 @@ namespace E_commerce.Services
             await _orderRepo.AddOrder(order);
             await _orderRepo.SaveChanges();
 
+            await _notificationService.CreateAsync(new CreateNotificationRequest
+            {
+                UserId = userId,
+                Title = "Đặt hàng thành công",
+                Message = $"Đơn hàng của bạn đã được xác nhận. Mã đơn: {order.Id}",
+                Type = "ORDER_CONFIRMED"
+            });
+
+
             if (request.CartItemIds != null && request.CartItemIds.Count > 0)
                 await _cartService.RemoveItemsByIdsAsync(request.CartItemIds);
             else
@@ -184,6 +206,14 @@ namespace E_commerce.Services
 
             order.Status = OrderStatus.Cancelled;
             await _orderRepo.SaveChanges();
+
+            await _notificationService.CreateAsync(new CreateNotificationRequest
+            {
+                UserId = userId,
+                Title = "Đơn hàng đã được hủy",
+                Message = $"Đơn hàng {orderId} của bạn đã được hủy thành công.",
+                Type = "ORDER_CANCELLED"
+            });
         }
 
         private static OrderResponse MapToResponse(Order order) => new OrderResponse()
@@ -200,6 +230,7 @@ namespace E_commerce.Services
             PaymentMethodName = order.PaymentMethod != null? order.PaymentMethod.Name : string.Empty,
             VoucherCode = order.Voucher?.Code,
             UserId = order.UserId,
+            
             Items = order.OrderDetails.Select(od => new OrderDetailResponse
             {
                 Id = od.Id,
@@ -208,7 +239,9 @@ namespace E_commerce.Services
                 VariantName = od.ProductVariant != null? od.ProductVariant.Name : string.Empty,
                 OrderQuantity = od.OrderQuantity,
                 UnitPrice = od.UnitPrice,
-                TotalPrice = od.UnitPrice * od.OrderQuantity
+                TotalPrice = od.UnitPrice * od.OrderQuantity,
+                ImageUrl = od.ProductVariant?.Product?.ProductImages
+               ?.FirstOrDefault()?.ImageUrl ?? string.Empty,
             }).ToList()
         };
     }

@@ -1,7 +1,7 @@
-# E-Commerce Backend — Tài liệu chi tiết tính năng
+# E-Commerce — Tài liệu chi tiết tính năng
 
-> **Mục đích:** File này là bản ghi đầy đủ về kiến trúc và tính năng của backend. Đọc file này thay vì quét lại codebase.
-> **Cập nhật lần cuối:** 2026-05-30
+> **Mục đích:** File này là bản ghi đầy đủ về kiến trúc và tính năng của toàn bộ project (backend + frontend). Đọc file này thay vì quét lại codebase.
+> **Cập nhật lần cuối:** 2026-06-01
 
 ---
 
@@ -15,8 +15,10 @@
 | Authentication | JWT (HS256, 60 phút) |
 | Password Hashing | BCrypt.Net-Next v4.0.3 |
 | Image Upload | Cloudinary (CloudinaryDotNet v1.29.1) |
+| Payment Gateway | VNPay Sandbox (HMAC-SHA512) |
 | API Docs | Swagger / Swashbuckle v6.6.2 |
 | Testing | xUnit |
+| Frontend | React 18 + Vite + Tailwind CSS v4 + Ant Design |
 
 ---
 
@@ -37,6 +39,15 @@ Backend/
 │   ├── appsettings.json
 │   └── Program.cs
 └── E-commerce.Tests/      # Unit test project
+
+Frontend/E-commerce/src/
+├── api/                   # Axios API clients
+├── context/               # React Context providers
+├── pages/                 # Page components
+│   ├── customer/          # Customer-facing pages
+│   └── admin/             # Admin pages
+└── components/            # Shared components
+    └── customer/          # Customer components (Navbar, Footer, NotificationBell...)
 ```
 
 ---
@@ -181,7 +192,7 @@ Backend/
 | Field | Type | Ghi chú |
 |---|---|---|
 | Id | Guid | PK |
-| Name | string(100) | |
+| Name | string(100) | Tên chứa "vnpay" sẽ trigger VNPay flow |
 | Description | string(255)? | |
 | IsActive | bool | |
 
@@ -210,6 +221,17 @@ Backend/
 | Status | string(50) | Pending / InProgress / Resolved |
 | CreatedDate | DateTime | |
 
+### Notification *(mới)*
+| Field | Type | Ghi chú |
+|---|---|---|
+| Id | Guid | PK |
+| UserId | Guid | FK → User |
+| Title | string(150) | Tiêu đề ngắn |
+| Message | string(500) | Nội dung |
+| IsRead | bool | Default false |
+| CreatedAt | DateTime | UTC |
+| Type | string(50) | ORDER_CONFIRMED / ORDER_CANCELLED / PAYMENT_FAILED / TICKET_REPLY |
+
 ---
 
 ## 4. API Endpoints
@@ -229,7 +251,7 @@ Backend/
 
 | Method | Path | Auth | Mô tả |
 |---|---|---|---|
-| GET | /api/products | Anonymous | Danh sách sản phẩm (filter + phân trang) |
+| GET | /api/products?pageSize=1000 | Anonymous | Danh sách sản phẩm (filter + phân trang, max 1000) |
 | GET | /api/products/{id} | Anonymous | Chi tiết sản phẩm |
 | POST | /api/products | Admin | Tạo sản phẩm (kèm variants + images) |
 | PUT | /api/products/{id} | Admin, Staff | Cập nhật sản phẩm |
@@ -290,18 +312,20 @@ Backend/
 | DELETE | /api/cart/remove?productVariantId= | Required | Xóa 1 item |
 | DELETE | /api/cart | Required | Xóa toàn bộ giỏ |
 
+**CartItemDto fields:** Id, ProductVariantId, **ProductId** *(thêm mới)*, ProductName, ProductVariantName, Price, Quantity
+
 ---
 
 ### Orders — `api/orders`
 
 | Method | Path | Auth | Mô tả |
 |---|---|---|---|
-| POST | /api/orders | Customer | Tạo đơn từ giỏ hàng |
+| POST | /api/orders | Customer, Admin | Tạo đơn từ giỏ hàng |
 | GET | /api/orders | Admin, Staff | Tất cả đơn hàng |
-| GET | /api/orders/my | Customer | Đơn của user hiện tại |
+| GET | /api/orders/my?status= | Customer, Admin | Đơn của user (filter theo status, sort mới nhất) |
 | GET | /api/orders/{id} | Required | Chi tiết đơn |
 | PUT | /api/orders/{id}/status | Admin, Staff | Cập nhật trạng thái đơn |
-| PUT | /api/orders/{id}/cancel | Customer | Hủy đơn (chỉ khi Pending/Processing) |
+| PUT | /api/orders/{id}/cancel | Customer, Admin | Hủy đơn (chỉ khi Pending) |
 
 **Order Creation Flow:**
 1. Validate ShippingAddress thuộc user
@@ -312,6 +336,13 @@ Backend/
 6. Snapshot thông tin giao hàng vào Order
 7. Tạo OrderDetails, trừ kho, tăng UsedCount voucher
 8. Xóa CartItems đã order
+9. **Gửi in-app notification "Đặt hàng thành công"** *(mới)*
+
+**OrderDetailResponse fields:** Id, ProductVariantId, ProductName, VariantName, OrderQuantity, UnitPrice, TotalPrice, **ImageUrl** *(thêm mới)*
+
+**`GET /api/orders/my` query params:**
+- `status` (int?, optional): 0=Pending, 1=Processing, 2=Shipped, 3=Delivered, 4=Cancelled
+- Mặc định sort theo `OrderDate` descending
 
 ---
 
@@ -340,19 +371,17 @@ Backend/
 | PATCH | /api/vouchers/{id} | Admin | Cập nhật voucher |
 | DELETE | /api/vouchers/{id} | Admin | Xóa voucher |
 
-**Validate logic:** active → trong date range → còn UsedCount < TotalQuantity → OrderAmount ≥ MinOrderAmount → tính discount (cap MaxDiscountAmount).
-
 ---
 
 ### Shipping Addresses — `api/shipping-addresses`
 
 | Method | Path | Auth | Mô tả |
 |---|---|---|---|
-| GET | /api/shipping-addresses | Customer | Danh sách địa chỉ của mình |
-| POST | /api/shipping-addresses | Customer | Thêm địa chỉ |
-| PUT | /api/shipping-addresses/{id} | Customer | Cập nhật địa chỉ (chỉ của mình) |
-| DELETE | /api/shipping-addresses/{id} | Customer | Xóa địa chỉ |
-| PATCH | /api/shipping-addresses/{id}/default | Customer | Đặt làm mặc định |
+| GET | /api/shipping-addresses | Customer, Admin | Danh sách địa chỉ của mình |
+| POST | /api/shipping-addresses | Customer, Admin | Thêm địa chỉ |
+| PUT | /api/shipping-addresses/{id} | Customer, Admin | Cập nhật địa chỉ |
+| DELETE | /api/shipping-addresses/{id} | Customer, Admin | Xóa địa chỉ |
+| PATCH | /api/shipping-addresses/{id}/default | Customer, Admin | Đặt làm mặc định |
 
 ---
 
@@ -367,6 +396,35 @@ Backend/
 
 ---
 
+### Payment / VNPay — `api/payment` *(mới)*
+
+| Method | Path | Auth | Mô tả |
+|---|---|---|---|
+| POST | /api/payment/vnpay/create | Required | Tạo URL thanh toán VNPay |
+| GET | /api/payment/vnpay/ipn | None | IPN callback từ VNPay |
+
+**VNPay Flow:**
+1. Frontend tạo order → gọi `POST /api/payment/vnpay/create` với `orderId`
+2. Backend tạo URL có HMAC-SHA512 signature → trả về URL
+3. Frontend redirect user sang VNPay sandbox
+4. User thanh toán → VNPay gọi IPN vào backend
+5. Backend verify signature → cập nhật OrderStatus → gửi notification
+6. VNPay redirect user về `/payment/result` (frontend)
+
+**VNPay Config:**
+```json
+{
+  "VNPay": {
+    "TmnCode": "<merchant_code>",
+    "HashSecret": "<hash_secret>",
+    "BaseUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+    "ReturnUrl": "http://localhost:5173/payment/result"
+  }
+}
+```
+
+---
+
 ### Support Requests — `api/supports`
 
 | Method | Path | Auth | Mô tả |
@@ -374,7 +432,20 @@ Backend/
 | POST | /api/supports | Customer | Tạo ticket hỗ trợ |
 | GET | /api/supports | Customer | Tickets của mình |
 | GET | /api/supports/all?status= | Admin, Staff | Tất cả tickets (filter theo status) |
-| PATCH | /api/supports/{id}/status | Admin, Staff | Cập nhật status ticket |
+| PATCH | /api/supports/{id}/status | Admin, Staff | Cập nhật status ticket + gửi notification |
+
+**Notification trigger:** Khi status đổi sang `InProgress` hoặc `Resolved` → gửi in-app notification cho customer.
+
+---
+
+### Notifications — `api/notifications` *(mới)*
+
+| Method | Path | Auth | Mô tả |
+|---|---|---|---|
+| GET | /api/notifications | Required | Danh sách notification của user |
+| GET | /api/notifications/unread-count | Required | Số notification chưa đọc |
+| PATCH | /api/notifications/{id}/read | Required | Đánh dấu 1 notification đã đọc |
+| PATCH | /api/notifications/read-all | Required | Đánh dấu tất cả đã đọc |
 
 ---
 
@@ -393,9 +464,9 @@ Backend/
 | Method | Path | Auth | Mô tả |
 |---|---|---|---|
 | POST | /api/user/create-staff-admin | Admin | Tạo tài khoản Staff/Admin |
-| GET | /api/user/profile | Customer | Xem profile |
-| PUT | /api/user/profile | Customer | Cập nhật profile |
-| PUT | /api/user/password | Customer | Đổi mật khẩu |
+| GET | /api/user/profile | Customer, Admin | Xem profile |
+| PUT | /api/user/profile | Customer, Admin | Cập nhật profile |
+| PUT | /api/user/password | Customer, Admin | Đổi mật khẩu |
 | DELETE | /api/user/profile | Required | Soft delete tài khoản |
 
 ---
@@ -406,20 +477,6 @@ Backend/
 |---|---|---|---|
 | GET | /api/admins/customers | Admin | Danh sách Customers |
 | GET | /api/admins/staff | Admin | Danh sách Staff |
-
----
-
-### Staff — `api/staffs`
-
-| Method | Path | Auth | Mô tả |
-|---|---|---|---|
-| GET | /api/staffs | None | Danh sách staff |
-| GET | /api/staffs/{id} | None | Chi tiết staff |
-| POST | /api/staffs | None | Tạo staff |
-| PUT | /api/staffs/{id} | None | Cập nhật staff |
-| DELETE | /api/staffs/{id} | None | Xóa staff |
-
-> Lưu ý: Nhóm endpoint này không có auth (có thể là thiếu sót hoặc internal use).
 
 ---
 
@@ -445,74 +502,73 @@ Backend/
 - `role`: tên role (Admin / Staff / Customer)
 - `exp`: hết hạn sau 60 phút
 
-**Roles:**
-- `Admin` — toàn quyền
+**Lưu ý quan trọng:** Token JWT là snapshot tại thời điểm login. Nếu dùng token cũ (trước khi sửa code), `GetUserId()` có thể trả null → crash 500. Fix: logout → login lại để lấy token mới.
+
+**Roles — quyền truy cập:**
+- `Admin` — toàn quyền + có thể mua hàng (cart, order, address, profile)
 - `Staff` — quản lý sản phẩm, đơn hàng, hỗ trợ
 - `Customer` — mua hàng, review, quản lý cá nhân
 
-**Lấy UserId trong controller:**
-```csharp
-var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-```
+---
+
+## 6. In-App Notification System *(mới)*
+
+**Notification Types:**
+| Type | Trigger | Mô tả |
+|---|---|---|
+| ORDER_CONFIRMED | `OrderService.CreateOrder` | Sau khi tạo đơn thành công |
+| ORDER_CANCELLED | `OrderService.CancelOrder` | Sau khi hủy đơn thành công |
+| PAYMENT_FAILED | `PaymentController.Ipn` | Khi VNPay IPN trả về status ≠ "00" |
+| TICKET_REPLY | `SupportService.UpdateTicketStatusAsync` | Khi status đổi sang InProgress/Resolved |
+
+**Frontend:** `NotificationBell` component trong Navbar — hiển thị badge số chưa đọc, dropdown danh sách notification.
 
 ---
 
-## 6. Response Format chuẩn
+## 7. VNPay Payment Integration *(mới)*
 
-Tất cả API trả về `BaseResponse<T>`:
+**Signature algorithm:** HMAC-SHA512 trên chuỗi URL-encoded params, sort alphabetically.
+
+**Key points:**
+- Hash được tính trên chuỗi **URL-encoded** (không phải raw)
+- `vnp_TxnRef` = orderId (Guid string)
+- `vnp_Amount` = TotalAmount × 100 (VNPay tính theo đơn vị nhỏ nhất)
+- Frontend detect VNPay bằng: `paymentMethod.name.toLowerCase().includes('vnpay')`
+- `PaymentResultPage` tại route `/payment/result` đọc `vnp_ResponseCode` từ URL params
+
+---
+
+## 8. Response Format chuẩn
 
 ```json
 {
   "success": true,
-  "message": "Login successful.",
+  "message": "...",
   "data": { ... },
   "statusCode": 200
 }
 ```
 
-Lỗi:
-```json
-{
-  "success": false,
-  "message": "Email or password is incorrect.",
-  "data": null,
-  "statusCode": 401
-}
-```
+---
+
+## 9. Middleware
+
+**GlobalExceptionMiddleware:**
+- 401 status code → JSON `{"message": "Unauthorized. Please login first."}`
+- 403 status code → JSON `{"message": "You do not have permission..."}`
+- Unhandled exception → 500 với `ex.Message`
 
 ---
 
-## 7. Middleware
+## 10. Cloudinary Image Upload
 
-**GlobalExceptionMiddleware** — bắt toàn bộ unhandled exceptions:
-- `UnauthorizedAccessException` → 401
-- `ForbiddenException` → 403
-- Các lỗi khác → 500
-- Log tất cả qua `ILogger`
-
----
-
-## 8. Cloudinary Image Upload
-
-**Flow:**
-1. Client POST multipart/form-data đến `/api/images/upload`
-2. Server upload lên Cloudinary folder `ecommerce/products`
+1. POST multipart/form-data → `/api/images/upload`
+2. Upload lên folder `ecommerce/products`
 3. Trả về `SecureUrl`
 
-**Config:**
-```json
-{
-  "Cloudinary": {
-    "CloudName": "dwmsw7ofg",
-    "ApiKey": "523997812984961",
-    "ApiSecret": "3gzAINU8ZOOx-orpkseh7oLl6H4"
-  }
-}
-```
-
 ---
 
-## 9. Database Migrations (theo thứ tự)
+## 11. Database Migrations (theo thứ tự)
 
 | Migration | Nội dung |
 |---|---|
@@ -521,49 +577,52 @@ Lỗi:
 | 20260524073127_AddShippingAddress | Thêm bảng ShippingAddress |
 | 20260524152254_AddIsDeletedToProduct | Soft delete cho Product |
 | 20260524172958_AddCategoryIsDeleted | Soft delete cho Category |
-
-**Foreign Key Constraints:**
-- Cascade delete: Cart → CartItems, Product → ProductVariants
-- SetNull: Order.VoucherId khi Voucher bị xóa
-- Restrict: Hầu hết FK khác
+| AddNotification *(mới)* | Thêm bảng Notifications |
 
 ---
 
-## 10. Service & Repository Layer
+## 12. Service & Repository Layer
 
-**Services (20+):** JwtService, LoginService, RegisterService, ProductService, CartService, OrderService, ReviewService, VoucherService, PaymentMethodService, UserService, AdminUserService, AdminService, ShippingAddressService, SupportService, StaffService, ReportService, ProductVariantService, ProductImageService, CategoryService, BrandService.
+**Services:** JwtService, LoginService, RegisterService, ProductService, CartService, OrderService, ReviewService, VoucherService, PaymentMethodService, UserService, AdminUserService, AdminService, ShippingAddressService, SupportService, StaffService, ReportService, ProductVariantService, ProductImageService, CategoryService, BrandService, **VNPayService** *(mới)*, **NotificationService** *(mới)*
 
-**Repositories (9):** ProductRepository, ProductVariantRepository, UserRepository, RoleRepository, OrderRepository, VoucherRepository, ReviewRepository, StaffRepository, (+ CartRepository qua DbContext).
+**Repositories:** ProductRepository, ProductVariantRepository, UserRepository, RoleRepository, OrderRepository, VoucherRepository, ReviewRepository, StaffRepository, **NotificationRepository** *(mới)*
 
-Tất cả đều dùng **Scoped** DI, có interface riêng.
-
----
-
-## 11. Dependency Injection (Program.cs)
-
-- `AddDbContext<AppDbContext>` — SQL Server
-- `AddScoped<IXxxRepository, XxxRepository>` — 9 repositories
-- `AddScoped<IXxxService, XxxService>` — 20+ services
-- `AddSingleton<Cloudinary>` — Cloudinary instance
-- `AddAuthentication(JwtBearer)` — JWT với HS256
-- `AddCors` — AllowAll (any origin/method/header)
-- `AddEndpointsApiExplorer` + `AddSwaggerGen` — Swagger với JWT security
+**OrderRepository — quan trọng:** Tất cả 3 methods (`GetAll`, `GetById`, `GetByUserId`) đều include:
+```
+OrderDetails → ProductVariant → Product → ProductImages
+```
+Cần `ThenInclude(p => p.ProductImages)` để `ImageUrl` trong `OrderDetailResponse` hoạt động.
 
 ---
 
-## 12. Những điểm còn thiếu / cần lưu ý
+## 13. Frontend — Key Components & Context
 
-- **Không có payment gateway thực** (chỉ có PaymentMethod entity, không tích hợp VNPay/Stripe/Momo)
-- **Không có email notification** (đăng ký, đặt hàng, v.v.)
+| File | Mô tả |
+|---|---|
+| `context/ProductContext.jsx` | Load 1000 sản phẩm, `refreshProduct(id)` refresh 1 sp |
+| `context/NotificationContext.jsx` | Quản lý notifications, unread count |
+| `context/OrderContext.jsx` | `fetchMyOrders(params)` nhận filter `{status}` |
+| `context/CartContext.jsx` | Chỉ fetch cart khi `user.roleName === 'Customer'` |
+| `components/customer/NotificationBell.jsx` | Chuông thông báo trong Navbar |
+| `components/ScrollToTop.jsx` | Scroll về đầu trang khi chuyển route |
+| `pages/customer/PaymentResultPage.jsx` | Route `/payment/result` — đọc VNPay params |
+| `api/axiosInstance.js` | `privateClient` interceptor: chỉ xóa token khi **401**, không xóa khi 403 |
+
+---
+
+## 14. Những điểm cần lưu ý
+
+- **VNPay chỉ là sandbox** — cần đăng ký merchant thật để production
+- **IPN cần ngrok** để VNPay gọi được vào localhost khi test
 - **Không có rate limiting**
 - **Không có caching** (Redis hay in-memory)
 - **Cloudinary credentials trong appsettings** — nên dùng user-secrets hoặc env vars
-- **StaffController không có auth** — có thể là bug hoặc chưa hoàn thiện
 - **CORS AllowAll** — không phù hợp cho production
+- **StaffController không có auth** — cần review lại
 
 ---
 
-## 13. Connection String
+## 15. Connection String
 
 ```
 Server=localhost;Database=ECommerceDB;Trusted_Connection=True;TrustServerCertificate=True;

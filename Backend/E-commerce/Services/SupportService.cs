@@ -1,4 +1,5 @@
 using E_commerce.Data;
+using E_commerce.DTOs.Notification;
 using E_commerce.DTOs.SupportRequest;
 using E_commerce.Models;
 using E_commerce.Services.Interfaces;
@@ -13,10 +14,12 @@ namespace E_commerce.Services
     public class SupportService : ISupportService
     {
         private readonly AppDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public SupportService(AppDbContext context)
+        public SupportService(AppDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<SupportRequestResponseDto> CreateTicketAsync(Guid userId, CreateSupportRequestDto dto)
@@ -79,6 +82,21 @@ namespace E_commerce.Services
 
             ticket.Status = status;
             await _context.SaveChangesAsync();
+
+            if (status == "InProgress" || status == "Resolved")
+            {
+                var message = status == "InProgress"
+                    ? $"Yêu cầu hỗ trợ \"{ticket.Subject}\" đang được xử lý."
+                    : $"Yêu cầu hỗ trợ \"{ticket.Subject}\" đã được giải quyết.";
+
+                await _notificationService.CreateAsync(new CreateNotificationRequest
+                {
+                    UserId = ticket.UserId,
+                    Title = "Cập nhật yêu cầu hỗ trợ",
+                    Message = message,
+                    Type = "TICKET_REPLY"
+                });
+            }
 
             return new SupportRequestResponseDto
             {

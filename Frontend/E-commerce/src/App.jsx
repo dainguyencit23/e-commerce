@@ -4,11 +4,14 @@ import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
 import { CategoryProvider } from './context/CategoryContext'
 import { OrderProvider } from './context/OrderContext'
+import { NotificationProvider } from './context/NotificationContext';
 
 
 import CustomerLayout from './layouts/CustomerLayout';
 import AdminLayout from './layouts/AdminLayout';
 import StaffLayout from './layouts/StaffLayout';
+
+import ScrollToTop from './components/ScrollToTop';
 
 // Auth
 import LoginPage from './pages/auth/LoginPage';
@@ -44,58 +47,61 @@ import StaffInventoryPage from './pages/staff/StaffInventoryPage';
 export default function App() {
 return (
 	<BrowserRouter>
-		<AuthProvider>
-			<CategoryProvider>
-				<ProductProvider>
-					<CartProvider>
-						<OrderProvider>
-							<Routes>
-								{/* Auth */}
-								<Route path="/login" element={<LoginPage />} />
-								<Route path="/register" element={<RegisterPage />} />
+		<ScrollToTop/>
+			<AuthProvider>
+				<CategoryProvider>
+					<ProductProvider>
+						<CartProvider>
+							<OrderProvider>
+								<NotificationProvider>
+									<Routes>
+										{/* Auth */}
+										<Route path="/login" element={<LoginPage />} />
+										<Route path="/register" element={<RegisterPage />} />
 
-								{/* Customer */}
-								<Route element={<CustomerLayout />}>
-								<Route path="/" element={<HomePage />} />
-								<Route path="/products" element={<ProductsPage />} />
-								<Route path="/products/:id" element={<ProductDetailPage />} />
-								<Route path="/cart" element={<CartPage />} />
-								<Route path="/checkout" element={<CheckoutPage />} />
-								<Route path="/orders" element={<OrderTrackingPage />} />
-								<Route path="/account" element={<AccountPage />} />
-								<Route path="/support" element={<SupportPage />} />
-								<Route path="/payment/result" element={<PaymentResultPage />} />
-								</Route>
+										{/* Customer */}
+										<Route element={<CustomerLayout />}>
+										<Route path="/" element={<HomePage />} />
+										<Route path="/products" element={<ProductsPage />} />
+										<Route path="/products/:id" element={<ProductDetailPage />} />
+										<Route path="/cart" element={<CartPage />} />
+										<Route path="/checkout" element={<CheckoutPage />} />
+										<Route path="/orders" element={<OrderTrackingPage />} />
+										<Route path="/account" element={<AccountPage />} />
+										<Route path="/support" element={<SupportPage />} />
+										<Route path="/payment/result" element={<PaymentResultPage />} />
+										</Route>
 
-								{/* Admin */}
-								<Route path="/admin" element={<AdminLayout />}>
-								<Route index element={<Navigate to="/admin/dashboard" replace />} />
-								<Route path="dashboard" element={<DashboardPage />} />
-								<Route path="products" element={<ProductManagementPage />} />
-								<Route path="orders" element={<OrderManagementPage />} />
-								<Route path="customers" element={<CustomerManagementPage />} />
-								<Route path="categories" element={<CategoryManagementPage />} />
-								<Route path="promotions" element={<PromotionManagementPage />} />
-								<Route path="reports" element={<ReportPage />} />
-								<Route path="payment-methods" element={<PaymentMethodPage />} />
-								<Route path="staff" element={<StaffManagementPage />} />
-								</Route>
+										{/* Admin */}
+										<Route path="/admin" element={<AdminLayout />}>
+										<Route index element={<Navigate to="/admin/dashboard" replace />} />
+										<Route path="dashboard" element={<DashboardPage />} />
+										<Route path="products" element={<ProductManagementPage />} />
+										<Route path="orders" element={<OrderManagementPage />} />
+										<Route path="customers" element={<CustomerManagementPage />} />
+										<Route path="categories" element={<CategoryManagementPage />} />
+										<Route path="promotions" element={<PromotionManagementPage />} />
+										<Route path="reports" element={<ReportPage />} />
+										<Route path="payment-methods" element={<PaymentMethodPage />} />
+										<Route path="staff" element={<StaffManagementPage />} />
+										</Route>
 
-								{/* Staff */}
-								<Route path="/staff" element={<StaffLayout />}>
-								<Route index element={<Navigate to="/staff/orders" replace />} />
-								<Route path="orders" element={<StaffOrderPage />} />
-								<Route path="support" element={<StaffSupportPage />} />
-								<Route path="inventory" element={<StaffInventoryPage />} />
-								</Route>
+										{/* Staff */}
+										<Route path="/staff" element={<StaffLayout />}>
+										<Route index element={<Navigate to="/staff/orders" replace />} />
+										<Route path="orders" element={<StaffOrderPage />} />
+										<Route path="support" element={<StaffSupportPage />} />
+										<Route path="inventory" element={<StaffInventoryPage />} />
+										</Route>
 
-								<Route path="*" element={<Navigate to="/" replace />} />
-							</Routes>
-						</OrderProvider>
-					</CartProvider>
-				</ProductProvider>
-			</CategoryProvider>
-		</AuthProvider>
+										<Route path="*" element={<Navigate to="/" replace />} />
+									</Routes>
+								</NotificationProvider>
+							</OrderProvider>
+						</CartProvider>
+					</ProductProvider>
+				</CategoryProvider>
+			</AuthProvider>
 	</BrowserRouter>
 );
 }

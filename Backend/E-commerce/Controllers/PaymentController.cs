@@ -1,7 +1,9 @@
+using E_commerce.DTOs.Notification;
 using E_commerce.DTOs.Order;
 using E_commerce.DTOs.Payments;
 using E_commerce.Helpers;
 using E_commerce.Models;
+using E_commerce.Services;
 using E_commerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +16,12 @@ namespace E_commerce.Controllers
     {
         private readonly IVNPayService _vnpay;
         private readonly IOrderService _orderService;
-
-        public PaymentController(IVNPayService vnpay, IOrderService orderService)
+        private readonly INotificationService _notificationService;
+        public PaymentController(IVNPayService vnpay, IOrderService orderService, INotificationService notificationService)
         {
             _vnpay = vnpay;
             _orderService = orderService;
+            _notificationService = notificationService;
         }
 
         // Tạo URL thanh toán
@@ -52,6 +55,20 @@ namespace E_commerce.Controllers
             var orderId = Guid.Parse(Request.Query["vnp_TxnRef"]!);
             var newStatus = status == "00" ? OrderStatus.Processing : OrderStatus.Cancelled;
             await _orderService.UpdateStatus(orderId, new UpdateOrderStatusRequest { OrderStatus = newStatus });
+
+            // Notify payment failure
+            if (status != "00")
+            {
+                var order = await _orderService.GetOrderById(orderId);
+                if (order != null)
+                    await _notificationService.CreateAsync(new CreateNotificationRequest
+                    {
+                        UserId = order.UserId,
+                        Title = "Thanh toán thất bại",
+                        Message = $"Giao dịch cho đơn hàng {orderId} không thành công. Vui lòng thử lại.",
+                        Type = "PAYMENT_FAILED"
+                    });
+            }
 
             return Ok(new { RspCode = "00", Message = "Confirm success" });
         }
