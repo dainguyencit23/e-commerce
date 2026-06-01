@@ -106,9 +106,10 @@ namespace E_commerce.Tests.Order
         [Fact]
         public async Task GetMyOrders_ReturnsOk_WithUserOrders()
         {
-            _service.Setup(s => s.GetMyOrders(_userId)).ReturnsAsync(new List<OrderResponse> { FakeOrder() });
+            _service.Setup(s => s.GetMyOrders(_userId, It.IsAny<OrderFilterRequest>()))
+                .ReturnsAsync(new List<OrderResponse> { FakeOrder() });
 
-            var result = await _controller.GetMyOrders();
+            var result = await _controller.GetMyOrders(new OrderFilterRequest());
 
             var ok = Assert.IsType<OkObjectResult>(result);
             var payload = Assert.IsType<BaseResponse<List<OrderResponse>>>(ok.Value);
