@@ -18,7 +18,7 @@ const typeIcons = {
 };
 
 export default function NotificationBell() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -38,7 +38,11 @@ export default function NotificationBell() {
     <div className="relative" ref={ref}>
       <Badge count={unreadCount} size="small" offset={[-2, 2]}>
         <button
-          onClick={() => setOpen(prev => !prev)}
+          onClick={() => {
+            const isOpening = !open;
+            setOpen(prev => !prev);
+            if (isOpening) fetchNotifications();
+          }}
           className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
         >
           <BellOutlined style={{ fontSize: 20 }} />

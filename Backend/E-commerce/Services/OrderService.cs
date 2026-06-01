@@ -176,6 +176,35 @@ namespace E_commerce.Services
 
             order.Status = request.OrderStatus;
             await _orderRepo.SaveChanges();
+            
+            string? title = null;
+            string? message = null;
+            switch (request.OrderStatus)
+            {
+                case OrderStatus.Processing:
+                    title = "Đơn hàng đang được xử lí";
+                    message = $"Đơn hàng {order.Id} của bạn đang được chuẩn bị";
+                    break;
+                case OrderStatus.Shipped:
+                    title = "Đơn hàng đang được giao";
+                    message = $"Đơn hàng {order.Id} của bạn đang được giao";
+                    break;
+                case OrderStatus.Delivered:
+                    title = "Đơn hàng đã giao thành công";
+                    message = $"Đơn hàng {order.Id} của bạn đã được giao thành công. Cảm ơn bạn!";
+                    break;
+            }
+            if (title != null)
+{
+    await _notificationService.CreateAsync(new CreateNotificationRequest
+    {
+        UserId  = order.UserId,
+        Title   = title,
+        Message = message!,
+        Type    = "ORDER_STATUS_UPDATED"
+    });
+}
+
             return MapToResponse(order);
         }
         
