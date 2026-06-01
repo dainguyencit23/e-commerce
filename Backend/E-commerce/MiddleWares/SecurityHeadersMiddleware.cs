@@ -12,8 +12,13 @@ namespace E_commerce.Middlewares
             context.Response.Headers["X-Frame-Options"] = "DENY";
             context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
             context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-            context.Response.Headers["Content-Security-Policy"] =
-                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; font-src 'self'";
+
+            // Swagger dùng inline scripts nên bỏ qua CSP cho route /swagger
+            if (!context.Request.Path.StartsWithSegments("/swagger"))
+            {
+                context.Response.Headers["Content-Security-Policy"] =
+                    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; font-src 'self'";
+            }
 
             await _next(context);
         }
