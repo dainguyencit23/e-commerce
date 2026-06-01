@@ -14,13 +14,15 @@ namespace E_commerce.Services
 
         public string CreatePaymentUrl(Guid orderId, decimal amount, string orderInfo, string ipAddress)
         {
+            var vnNow = DateTime.UtcNow.AddHours(7); // UTC+7 Việt Nam
+
             var vnpay = new SortedDictionary<string, string>
             {
                 { "vnp_Version",     "2.1.0" },
                 { "vnp_Command",     "pay" },
                 { "vnp_TmnCode",     _config["VNPay:TmnCode"]! },
                 { "vnp_Amount",      ((long)(amount * 100)).ToString() },
-                { "vnp_CreateDate",  DateTime.Now.ToString("yyyyMMddHHmmss") },
+                { "vnp_CreateDate",  vnNow.ToString("yyyyMMddHHmmss") },
                 { "vnp_CurrCode",    "VND" },
                 { "vnp_IpAddr",      ipAddress },
                 { "vnp_Locale",      "vn" },
@@ -28,7 +30,7 @@ namespace E_commerce.Services
                 { "vnp_OrderType",   "other" },
                 { "vnp_ReturnUrl",   _config["VNPay:ReturnUrl"]! },
                 { "vnp_TxnRef",      orderId.ToString() },
-                { "vnp_ExpireDate",  DateTime.Now.AddMinutes(15).ToString("yyyyMMddHHmmss") },
+                { "vnp_ExpireDate",  vnNow.AddMinutes(15).ToString("yyyyMMddHHmmss") },
             };
 
             // Dùng URL-encoded cho cả hash lẫn URL (theo VNPay official sample)
