@@ -142,6 +142,61 @@ Frontend chạy tại: `http://localhost:5173`
 
 ---
 
+## 🐳 Chạy với Docker
+
+> Cách đơn giản nhất — không cần cài .NET, Node.js hay SQL Server.
+
+### Yêu cầu
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [SSMS](https://learn.microsoft.com/ssms) (để import data lần đầu)
+
+### Bước 1 — Start
+
+```bash
+docker-compose up --build
+```
+
+Chờ khoảng 30 giây để SQL Server khởi động.
+
+### Bước 2 — Import data (chỉ làm 1 lần)
+
+```bash
+# Copy file backup vào container
+docker cp Database/ECommerceDB_Official.bak e-commerce-db-1:/ECommerceDB_Official.bak
+
+# Stop backend trước khi restore
+docker stop e-commerce-backend-1
+```
+
+Mở **SSMS** → kết nối `localhost,1433` (sa / `ECommerce@Strong123`) → chuột phải **Databases** → **Restore Database** → chọn `/ECommerceDB_Official.bak`
+
+> ⚠️ Trong tab **Files**: tick **Relocate all files to folder** → điền `/var/opt/mssql/data`
+
+```bash
+# Start lại backend sau khi restore
+docker start e-commerce-backend-1
+```
+
+### Bước 3 — Truy cập
+
+| | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Swagger | http://localhost:5000/swagger |
+
+### Các lần chạy tiếp theo
+
+```bash
+docker-compose up          # có terminal
+docker-compose up -d       # chạy ngầm
+docker-compose down        # dừng
+docker-compose down -v     # dừng + xóa data
+```
+
+> Chi tiết và xử lý lỗi xem tại `README-DETAIL.md` — mục 16.
+
+---
+
 ## 🌿 Quy tắc làm việc với Git
 
 ### Tạo branch mới trước khi code

@@ -627,3 +627,100 @@ Cần `ThenInclude(p => p.ProductImages)` để `ImageUrl` trong `OrderDetailRes
 ```
 Server=localhost;Database=ECommerceDB;Trusted_Connection=True;TrustServerCertificate=True;
 ```
+
+---
+
+## 16. Chạy với Docker
+
+### Yêu cầu
+- Docker Desktop đã cài và đang chạy
+
+### Các bước chạy lần đầu
+
+**Bước 1 — Build và start:**
+```bash
+docker-compose up --build
+```
+Chờ khoảng **30 giây** để SQL Server khởi động và backend migrate xong.
+
+**Bước 2 — Import data vào Docker DB:**
+1. Mở **SSMS**, kết nối với thông tin:
+   - Server: `localhost,1433`
+   - Authentication: SQL Server Authentication
+   - Login: `sa` / Password: `ECommerce@Strong123`
+   - Tick **Trust Server Certificate**
+2. Copy file backup vào container:
+   ```bash
+   docker cp Database/ECommerceDB_Official.bak e-commerce-db-1:/ECommerceDB_Official.bak
+   ```
+3. **Stop backend trước khi restore** (DB đang bị backend giữ connection):
+   ```bash
+   docker stop e-commerce-backend-1
+   ```
+4. Trong SSMS: chuột phải **Databases** → **Restore Database** → chọn file `/ECommerceDB_Official.bak`
+5. Vào tab **Files** → tick **Relocate all files to folder** → điền `/var/opt/mssql/data` cho cả 2 ô → **OK**
+
+   > ⚠️ Bước này **bắt buộc** khi restore từ Windows sang Docker (Linux). Nếu bỏ qua sẽ lỗi "Directory lookup failed".
+
+6. Sau khi restore xong, start lại backend:
+   ```bash
+   docker start e-commerce-backend-1
+   ```
+
+**Bước 3 — Truy cập:**
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:5000 |
+| Swagger | http://localhost:5000/swagger |
+
+---
+
+### Các lần chạy tiếp theo (đã có data)
+```bash
+docker-compose up
+```
+
+### Chạy ngầm (không chiếm terminal)
+```bash
+docker-compose up -d
+```
+
+### Dừng Docker
+```bash
+docker-compose down
+```
+
+### Reset hoàn toàn — xóa sạch data
+```bash
+docker-compose down -v
+```
+
+---
+
+### Chia sẻ cho người khác
+
+| Cách | Yêu cầu |
+|---|---|
+| Qua Git (clone repo) | Người nhận cần có Docker Desktop, chạy `docker-compose up --build` |
+| Docker Hub | Push image lên Hub, người nhận chỉ cần `docker-compose up` |
+| File `.tar` | Export image bằng `docker save`, gửi file offline |
+
+---
+
+### Lưu ý & Lỗi thường gặp
+
+| Lỗi | Nguyên nhân | Cách fix |
+|---|---|---|
+| `Exclusive access could not be obtained` | Backend đang giữ connection vào DB | Stop backend trước: `docker stop e-commerce-backend-1` |
+| `Directory lookup for file C:\Program Files\...` | Path Windows không tồn tại trên Linux | Tab **Files** → tick **Relocate all files** → `/var/opt/mssql/data` |
+| `Database version 998 incompatible` | File `.bak` tạo từ SQL Server mới hơn Docker | Dùng image `2025-latest` trong docker-compose.yml |
+| Backend crash khi start | `__EFMigrationsHistory` bị xóa | **Không bao giờ xóa** bảng này |
+| `ERR_CONNECTION_REFUSED` | Backend container không chạy | Kiểm tra `docker ps`, start lại backend |
+| SSMS không kết nối được | Nhập sai port | Dùng `localhost,1433` (dấu **phẩy**, không phải hai chấm) |
+
+- **DB trong Docker là DB riêng** — không dùng chung với local SQL Server
+- **VNPay IPN** vẫn cần ngrok khi test trong Docker
+- **Sau `docker-compose down -v`**: volume bị xóa, phải restore lại `.bak` từ đầu
+- **Chia sẻ cho người khác**: gửi kèm file `Database/ECommerceDB_Official.bak`
