@@ -619,6 +619,38 @@ Cần `ThenInclude(p => p.ProductImages)` để `ImageUrl` trong `OrderDetailRes
 - **Cloudinary credentials trong appsettings** — nên dùng user-secrets hoặc env vars
 - **CORS AllowAll** — không phù hợp cho production
 - **StaffController không có auth** — cần review lại
+- **XSS** — đã triển khai Security Headers Middleware (xem mục 17)
+
+---
+
+## 17. Bảo mật XSS *(mới)*
+
+Dự án áp dụng bảo vệ XSS theo mô hình **Defense in Depth** (bảo vệ nhiều lớp).
+
+### Lớp 1 — Frontend (React)
+React tự động escape toàn bộ nội dung JSX trước khi render ra DOM. Dự án không sử dụng `dangerouslySetInnerHTML` ở bất kỳ component nào.
+
+### Lớp 2 — Security Headers Middleware
+
+File: `Backend/E-commerce/MiddleWares/SecurityHeadersMiddleware.cs`
+
+Tự động đính kèm các HTTP security headers vào mọi response:
+
+| Header | Giá trị | Mục đích |
+|---|---|---|
+| `X-Content-Type-Options` | `nosniff` | Chặn trình duyệt đoán sai MIME type |
+| `X-Frame-Options` | `DENY` | Chặn nhúng trang vào iframe (Clickjacking) |
+| `X-XSS-Protection` | `1; mode=block` | Bật bộ lọc XSS của trình duyệt cũ |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Giới hạn thông tin referrer |
+| `Content-Security-Policy` | `default-src 'self'; img-src 'self' https://res.cloudinary.com` | Chỉ cho phép tài nguyên từ nguồn tin cậy |
+
+Middleware đăng ký trong `Program.cs` sau `GlobalExceptionMiddleware`.
+
+### Lý do không cần Input Sanitization
+Backend chỉ trả về JSON, không render HTML — nên không có luồng nào đưa input user trực tiếp vào HTML response.
+
+### Kiểm chứng
+DevTools → tab **Network** → chọn bất kỳ request → **Response Headers** sẽ thấy các headers trên.
 
 ---
 
