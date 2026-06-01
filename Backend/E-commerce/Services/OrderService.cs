@@ -40,7 +40,10 @@ namespace E_commerce.Services
         public async Task<List<OrderResponse>> GetAllOrders()
         {
             var result = await _orderRepo.GetAll();
-            return result.Select(o => MapToResponse(o)).ToList();
+            return result
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => MapToResponse(o))
+                .ToList();
         }
         public async Task<List<OrderResponse>> GetMyOrders(Guid userId, OrderFilterRequest? filter = null)
             
