@@ -6,6 +6,7 @@ import paymentMethodApi from '../../api/paymentMethodApi';
 import orderApi from '../../api/orderApi';
 import shippingAddressApi from '../../api/shippingAddressApi';
 import voucherApi from '../../api/voucherApi';
+import paymentApi from '../../api/paymentApi'
 import {useProducts} from '../../context/ProductContext';
 
 
@@ -57,16 +58,28 @@ export default function CheckoutPage() {
 
   const handleOrder = async () => {
     try {
-      await orderApi.create({
-        shippingAddressId: selectedAddrId,
-        paymentMethodId: payMethod,
-        voucherCode: coupon || null,
-        cartItemIds: selectedItemIds ?? null,
-      });
+      const res =  await orderApi.create({
+                      shippingAddressId: selectedAddrId,
+                      paymentMethodId: payMethod,
+                      voucherCode: coupon || null,
+                      cartItemIds: selectedItemIds ?? null,
+                    });
+      const orderId = res.data.id;
       const productIds = [...new Set(checkoutItems.map(i => i.productId))];
 	    await Promise.all(productIds.map(id => refreshProduct(id)));
       if (!selectedItemIds) await clearCart();
-      navigate('/orders', { state: { justOrdered: true } });
+      
+      const selectedPay = paymentMethodsList.find(p => p.id === payMethod);
+      if (selectedPay?.name?.toLowerCase().includes('vnpay')){
+        const payRes  = await paymentApi.createVNPay({orderId});
+        window.location.href = payRes.data;
+      }
+      else{
+        navigate('/orders', { state: { justOrdered: true } });
+      }
+
+      
+      
     } catch (e) {
       console.error('Error creating order:', e);
     }

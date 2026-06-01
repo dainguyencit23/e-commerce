@@ -23,6 +23,7 @@ import CheckoutPage from './pages/customer/CheckoutPage';
 import OrderTrackingPage from './pages/customer/OrderTrackingPage';
 import AccountPage from './pages/customer/AccountPage';
 import SupportPage from './pages/customer/SupportPage';
+import PaymentResultPage from './pages/customer/PaymentResultPage';
 
 // Admin
 import DashboardPage from './pages/admin/DashboardPage';
@@ -63,6 +64,7 @@ return (
 								<Route path="/orders" element={<OrderTrackingPage />} />
 								<Route path="/account" element={<AccountPage />} />
 								<Route path="/support" element={<SupportPage />} />
+								<Route path="/payment/result" element={<PaymentResultPage />} />
 								</Route>
 
 								{/* Admin */}
