@@ -22,6 +22,7 @@ namespace E_commerce.DTOs.Products
         public int Page { get; set; } = 1;
         [Range(1, 1000, ErrorMessage = "The maximum page size is 100")]
         public int PageSize { get; set; } = 10;
+        public string? SortBy { get; set; }
 
     }
 

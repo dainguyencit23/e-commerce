@@ -1,53 +1,51 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Select, Button, Rate, Empty, Radio, InputNumber, Card, Pagination } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
-import { useProducts } from '../../context/ProductContext';
 import { useCategories } from '../../context/CategoryContext'
+import { useBrands } from '../../context/BrandContext';
+import { productAPi } from '../../api/productApi.js';
 
 export default function ProductsPage() {
   const { categories } = useCategories();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
-
+  const {brands} = useBrands();
   const categoryParam = searchParams.get('category') || '';
   const query = searchParams.get('q') || '';
-
   const [sort, setSort] = useState('default');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
-  const [brandName, setbrandName] = useState('');
-  const { products } = useProducts();
+  const [products, setProducts] = useState([])
+  const [total, setTotal] = useState(0)
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
+  const [brandName, setBrandName] = useState('');
 
-  console.log("products: ", products)
-  const brandNames = [...new Set(products.map(p => p.brandName))];
+  useEffect(() => {
+    const fetch = async () => {
+        const res = await productAPi.getAll({
+            keyword: query,
+            categoryId: selectedCategory?.id,
+            brandId: brands.find(b => b.name === brandName)?.id,
+            minPrice: priceMin || undefined,
+            maxPrice: priceMax || undefined,
+            sortBy: sort === 'default' ? undefined : sort,
+            page: currentPage,
+            pageSize: ITEMS_PER_PAGE
+        });
+        setProducts(res.data.items);
+        setTotal(res.data.totalItems);
+    };
+    fetch();
+}, [query, categoryParam, brandName, priceMin, priceMax, sort, currentPage]);
 
-  const filtered = useMemo(() => {
-    setCurrentPage(1);
-    let list = [...products];
-    if (categoryParam) list = list.filter(p => p.categoryName === categoryParam);
-    if (query) list = list.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.brandName.toLowerCase().includes(query.toLowerCase()));
-    if (brandName) list = list.filter(p => p.brandName === brandName);
-    if (priceMin) list = list.filter(p => p.minPrice >= Number(priceMin));
-    if (priceMax) list = list.filter(p => p.minPrice <= Number(priceMax));
-    if (sort === 'price-asc') list.sort((a, b) => a.minPrice - b.minPrice);
-    if (sort === 'price-desc') list.sort((a, b) => b.minPrice - a.minPrice);
-    if (sort === 'averageRating') list.sort((a, b) => b.averageRating - a.averageRating);
-    return list;
-  }, [categoryParam, query, sort, priceMin, priceMax, brandName, products]);
-
-  const paginatedProducts = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   const selectedCategory = categories.find(c => c.name === categoryParam);
 
   const resetFilters = () => {
-    setbrandName(''); setPriceMin(''); setPriceMax(''); setSort('default');
+    setBrandName(''); setPriceMin(''); setPriceMax(''); setSort('default');
     setSearchParams({});
   };
 
@@ -84,9 +82,9 @@ export default function ProductsPage() {
 
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Thương hiệu</p>
-                  <Radio.Group value={brandName} onChange={e => setbrandName(e.target.value)} className="flex flex-col gap-1.5">
+                  <Radio.Group value={brandName} onChange={e => setBrandName(e.target.value)} className="flex flex-col gap-1.5">
                     <Radio value="">Tất cả</Radio>
-                    {brandNames.map(b => <Radio key={b} value={b}>{b}</Radio>)}
+                    {brands.map(b => <Radio key={b.id} value={b.name}>{b.name}</Radio>)}
                   </Radio.Group>
                 </div>
 
@@ -107,23 +105,23 @@ export default function ProductsPage() {
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-600">
                 {query && <span>Kết quả cho <strong>"{query}"</strong> – </span>}
-                <strong>{filtered.length}</strong> sản phẩm
+                <strong>{total}</strong> sản phẩm
               </p>
               <Select value={sort} onChange={setSort} className="w-44">
                 <Select.Option value="default">Mặc định</Select.Option>
                 <Select.Option value="price-asc">Giá thấp → cao</Select.Option>
                 <Select.Option value="price-desc">Giá cao → thấp</Select.Option>
-                <Select.Option value="averageRating">Đánh giá cao nhất</Select.Option>
+                <Select.Option value="rating">Đánh giá cao nhất</Select.Option>
               </Select>
             </div>
 
-            {filtered.length === 0 ? (
+            {total === 0 ? (
               <Empty description="Không tìm thấy sản phẩm phù hợp" className="py-16">
                 <Button type="primary" onClick={resetFilters}>Xóa bộ lọc</Button>
               </Empty>
             ) : (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-5">
-                {paginatedProducts.map(p => (
+                {products.map(p => (
                   <div key={p.id} className="product-card relative" onClick={() => navigate(`/products/${p.id}`)}>
                     <div className="product-card-img">
                       <img src={p.imageUrls?.[0]} alt={p.name} /> 
@@ -141,12 +139,12 @@ export default function ProductsPage() {
               </div>
             )}
 
-            {filtered.length > ITEMS_PER_PAGE && (
+            {total > ITEMS_PER_PAGE && (
               <div className="flex justify-center mt-8">
                 <Pagination
                   current={currentPage}
                   pageSize={ITEMS_PER_PAGE}
-                  total={filtered.length}
+                  total={total}
                   onChange={(page) => {
                     setCurrentPage(page);
                     window.scrollTo(0, 0);

@@ -51,9 +51,15 @@ namespace E_commerce.Services
 
             var totalItems = await query.CountAsync();
 
+            var orderedQuery = request.SortBy switch
+            {
+                "price-asc"  => query.OrderBy(p => p.ProductVariants.Min(v => v.Price)),
+                "price-desc" => query.OrderByDescending(p => p.ProductVariants.Min(v => v.Price)),
+                "rating"     => query.OrderByDescending(p => p.AverageRating),
+                _            => query.OrderBy(p => p.Name)  
+            };
             // phân trang
-            var products = await query
-                .OrderBy(p => p.Name)
+            var products = await orderedQuery
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync();
