@@ -26,7 +26,7 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IVNPayService, VNPayService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 
 // Services
@@ -50,6 +50,8 @@ builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IVNPayService, VNPayService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 var cloudinarySettings = builder.Configuration
     .GetSection("Cloudinary")

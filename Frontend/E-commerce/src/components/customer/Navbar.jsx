@@ -5,6 +5,7 @@ import { ShoppingCartOutlined, UserOutlined, SearchOutlined, MenuOutlined } from
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCategories} from '../../context/CategoryContext';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const { totalItems } = useCart();
@@ -29,10 +30,9 @@ export default function Navbar() {
     { type: 'divider' },
     { key: 'logout', label: <span className="text-red-500" onClick={handleLogout}>Đăng xuất</span> },
   ];
-  console.log(user);
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 bg-white shadow-sm border-b-2 border-blue-500">
       <div className="container">
         <div className="flex items-center gap-4 h-16">
           <Link to="/" className="flex items-center gap-1.5 text-blue-600 font-bold text-lg flex-shrink-0">
@@ -56,6 +56,8 @@ export default function Navbar() {
                 <ShoppingCartOutlined className="text-2xl text-gray-600 hover:text-blue-600 transition-colors" />
               </Badge>
             </Link>
+
+            {user && <NotificationBell />}
 
             {user ? (
               <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="bottomRight">
@@ -81,7 +83,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        <nav className={`pb-2 flex gap-4 overflow-x-auto text-sm ${menuOpen ? 'flex' : 'hidden md:flex'}`}>
+        <nav className={`pb-2 flex gap-4 overflow-x-auto text-sm border-t border-blue-50 pt-2 ${menuOpen ? 'flex' : 'hidden md:flex'}`}>
           <Link to="/products" className="text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
             Tất cả sản phẩm
           </Link>

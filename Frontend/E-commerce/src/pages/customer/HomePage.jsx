@@ -67,9 +67,6 @@ export default function HomePage() {
     link: `/products/${p.id}`,
     bg: BG_GRADIENTS[i % BG_GRADIENTS.length],
   }));
-  console.log("products: ", featured);
-  console.log("get featured products: ", getFeaturedProducts)
-
   useEffect(() => {
     if (slides.length === 0) return;
     const t = setInterval(() => setSlide(s => (s + 1) % slides.length), 4000);
@@ -82,13 +79,12 @@ export default function HomePage() {
       {slides.length > 0 && (
         <section
           className="py-16 px-4 transition-all duration-500 relative overflow-hidden"
-          style={{
-            background: slides[slide].bg,
-            ...(slides[slide].image ? {
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)), url(${slides[slide].image})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            } : {})
+          style={slides[slide].image ? {
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)), url(${slides[slide].image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          } : {
+            backgroundImage: slides[slide].bg,
           }}
         >
           <div className="container text-center text-white">
@@ -113,7 +109,7 @@ export default function HomePage() {
       )}
 
       {/* Categories */}
-      <section className="py-12">
+      <section className="py-12 bg-gradient-to-b from-blue-50 to-white">
         <div className="container">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Danh mục <span className="text-blue-600">sản phẩm</span></h2>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4">
@@ -121,9 +117,11 @@ export default function HomePage() {
               <Link
                 key={cat.name}
                 to={`/products?category=${cat.name}`}
-                className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-center"
+                className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-blue-100 shadow-sm hover:shadow-md hover:shadow-blue-100 hover:-translate-y-1 hover:border-blue-400 transition-all text-center"
               >
-                <div className="text-3xl">{getCatIcon(cat.name)}</div>
+                <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-3xl mb-1">
+                  {getCatIcon(cat.name)}
+                </div>
                 <p className="text-sm font-medium text-gray-700">{cat.name}</p>
               </Link>
             ))}
@@ -135,7 +133,7 @@ export default function HomePage() {
         <div className="container">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Sản phẩm <span className="text-blue-600">nổi bật</span></h2>
-            <Link to="/products"><Button>Xem tất cả →</Button></Link>
+            <Link to="/products"><Button type="primary" ghost>Xem tất cả →</Button></Link>
           </div>
           {loading ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
@@ -152,20 +150,25 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-12">
+      <section className="py-14 bg-gray-50">
         <div className="container">
-          <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">Tại sao chọn <span className="text-blue-600">TechShop?</span></h2>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
+          <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">
+            Tại sao chọn <span className="text-blue-600">TechShop?</span>
+          </h2>
+          <p className="text-center text-gray-500 text-sm mb-10">Cam kết mang đến trải nghiệm mua sắm tốt nhất</p>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
             {[
-              { icon: '✅', title: 'Hàng chính hãng 100%', desc: 'Cam kết tất cả sản phẩm có nguồn gốc rõ ràng, tem chính hãng' },
-              { icon: '🚚', title: 'Giao hàng nhanh', desc: 'Giao hàng trong 24h tại TP.HCM, 2-3 ngày toàn quốc' },
-              { icon: '🔄', title: 'Đổi trả 30 ngày', desc: 'Chính sách đổi trả linh hoạt trong vòng 30 ngày' },
-              { icon: '🛡️', title: 'Bảo hành tận nơi', desc: 'Hỗ trợ bảo hành tận nhà, không cần mang máy đến shop' },
+              { icon: '✅', title: 'Hàng chính hãng 100%', desc: 'Cam kết tất cả sản phẩm có nguồn gốc rõ ràng, tem chính hãng', color: 'bg-green-50 text-green-600' },
+              { icon: '🚚', title: 'Giao hàng nhanh', desc: 'Giao hàng trong 24h tại TP.HCM, 2-3 ngày toàn quốc', color: 'bg-blue-50 text-blue-600' },
+              { icon: '🔄', title: 'Đổi trả 30 ngày', desc: 'Chính sách đổi trả linh hoạt trong vòng 30 ngày', color: 'bg-orange-50 text-orange-500' },
+              { icon: '🛡️', title: 'Bảo hành tận nơi', desc: 'Hỗ trợ bảo hành tận nhà, không cần mang máy đến shop', color: 'bg-purple-50 text-purple-600' },
             ].map((f, i) => (
-              <div key={i} className="bg-white rounded-xl p-6 shadow-sm text-center hover:shadow-md transition-shadow">
-                <div className="text-4xl mb-3">{f.icon}</div>
+              <div key={i} className="bg-white rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+                <div className={`w-14 h-14 rounded-2xl ${f.color} flex items-center justify-center text-2xl mx-auto mb-4`}>
+                  {f.icon}
+                </div>
                 <h3 className="font-semibold text-gray-800 mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-500">{f.desc}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
