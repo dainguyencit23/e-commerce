@@ -160,6 +160,7 @@ using (var scope = app.Services.CreateScope())
 
 // Middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
