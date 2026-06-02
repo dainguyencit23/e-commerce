@@ -2,6 +2,7 @@
 using E_commerce.Models;
 using E_commerce.Repositories.Interfaces;
 using E_commerce.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.Services
 {
@@ -49,33 +50,36 @@ namespace E_commerce.Services
         }
         public async Task<string> CreateStaff(CreateStaff staff)
         {
-            var emailExists = await _staffRepository.EmailExists(staff.Email);
+            var email = staff.Email.Trim().ToLower();
 
-            if (emailExists)
-            {
+            if (await _staffRepository.EmailExists(email))
                 return "Email already exists";
-            }
 
             var staffRole = await _staffRepository.GetStaffRole();
             if (staffRole == null)
-            {
                 return "Staff role not found";
-            }
 
             var newStaff = new User
             {
                 Id = Guid.NewGuid(),
                 Name = staff.Name,
                 FullName = staff.FullName,
-                Email = staff.Email,
-                Password = staff.Password,
+                Email = email,
+                Password = BCrypt.Net.BCrypt.HashPassword(staff.Password),
                 PhoneNumber = staff.PhoneNumber,
                 RoleId = staffRole.Id
             };
-            await _staffRepository.AddStaff(newStaff);
-            await _staffRepository.SaveChanges();
 
-            return "Create successfully";
+            try
+            {
+                await _staffRepository.AddStaff(newStaff);
+                await _staffRepository.SaveChanges();
+                return "Create successfully";
+            }
+            catch (DbUpdateException)
+            {
+                return "Email already exists";
+            }
         }
         public async Task<String> UpdateStaff(Guid id, UpdateStaff staff)
         {

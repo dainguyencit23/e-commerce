@@ -25,6 +25,8 @@ export default function CheckoutPage() {
     : items;
 
   const [step, setStep] = useState(0);
+
+  useEffect(() => { window.scrollTo(0, 0); }, [step]);
   const [paymentMethodsList, setPaymentMethodsList] = useState([]);
   const [payMethod, setPayMethod] = useState(null);
   const [coupon, setCoupon] = useState('');
