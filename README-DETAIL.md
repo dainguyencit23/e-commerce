@@ -585,6 +585,8 @@ Frontend/E-commerce/src/
 
 **Services:** JwtService, LoginService, RegisterService, ProductService, CartService, OrderService, ReviewService, VoucherService, PaymentMethodService, UserService, AdminUserService, AdminService, ShippingAddressService, SupportService, StaffService, ReportService, ProductVariantService, ProductImageService, CategoryService, BrandService, **VNPayService** *(mới)*, **NotificationService** *(mới)*
 
+**StaffService.CreateStaff — quan trọng:** Password được hash bằng BCrypt trước khi lưu DB. Trước đây lưu plaintext gây `SaltParseException` khi login.
+
 **Repositories:** ProductRepository, ProductVariantRepository, UserRepository, RoleRepository, OrderRepository, VoucherRepository, ReviewRepository, StaffRepository, **NotificationRepository** *(mới)*
 
 **OrderRepository — quan trọng:** Tất cả 3 methods (`GetAll`, `GetById`, `GetByUserId`) đều include:
@@ -618,7 +620,7 @@ Cần `ThenInclude(p => p.ProductImages)` để `ImageUrl` trong `OrderDetailRes
 - **Không có caching** (Redis hay in-memory)
 - **Cloudinary credentials trong appsettings** — nên dùng user-secrets hoặc env vars
 - **CORS AllowAll** — không phù hợp cho production
-- **StaffController không có auth** — cần review lại
+- **StaffController** — đã thêm `[Authorize(Roles = "Admin")]` ở class level
 - **XSS** — đã triển khai Security Headers Middleware (xem mục 17)
 
 ---

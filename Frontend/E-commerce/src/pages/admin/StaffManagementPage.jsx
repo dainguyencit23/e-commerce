@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Space } from 'antd';
+import { Table, Button, Modal, Form, Input, Space, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import staffApi from '../../api/staffApi';
 
@@ -38,7 +38,9 @@ export default function StaffManagementPage() {
       }
       setShowModal(false);
       load();
-    } catch { /* handle error */ }
+    } catch {
+      message.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    }
   };
 
   const columns = [

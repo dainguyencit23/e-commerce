@@ -3,6 +3,7 @@ using E_commerce.DTOs.Staff;
 using E_commerce.Helpers;
 using E_commerce.Services;
 using E_commerce.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,6 +11,7 @@ namespace E_commerce.Controllers.StaffController
 {
     [Route("api/staffs")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class StaffController : ControllerBase
     {
         private readonly IStaffService _staffService;

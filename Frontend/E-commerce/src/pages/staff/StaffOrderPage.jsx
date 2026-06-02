@@ -64,14 +64,19 @@ export default function StaffOrderPage() {
         open={!!selected} onCancel={() => setSelected(null)} footer={null}>
         {selected && (
           <div className="flex flex-col gap-3">
-            <div>
-              <p className="text-sm text-gray-500">{selected.shippingAddress}</p>
-              <p className="text-xs text-gray-400">{selected.paymentMethodName}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Khách hàng</p>
+                <p className="text-sm font-medium">{selected.receiverName}</p>
+                <p className="text-xs text-gray-500">{selected.receiverPhone}</p></div>
+              <div><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Thanh toán</p>
+                <p className="text-sm">{selected.paymentMethodName}</p></div>
+              <div className="col-span-2"><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Địa chỉ giao hàng</p>
+                <p className="text-sm text-gray-600">{selected.shippingAddress}</p></div>
             </div>
             <div>
               {(selected.items || []).map((item, i) => (
                 <div key={i} className="flex justify-between text-sm py-1.5 border-b border-gray-100 last:border-0">
-                  <span className="flex-1">{item.variantName}</span>
+                  <span className="flex-1">{item.productName} - {item.variantName}</span>
                   <span className="text-gray-500 mx-3">×{item.orderQuantity}</span>
                   <span className="font-semibold">{formatPrice(item.unitPrice * item.orderQuantity)}</span>
                 </div>

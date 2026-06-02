@@ -59,10 +59,13 @@ export default function OrderManagementPage() {
         {selected && (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Giao hàng</p>
-                <p className="text-sm">{selected.shippingAddress}</p></div>
+              <div><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Khách hàng</p>
+                <p className="text-sm font-medium">{selected.receiverName}</p>
+                <p className="text-xs text-gray-500">{selected.receiverPhone}</p></div>
               <div><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Thanh toán</p>
                 <p className="text-sm">{selected.paymentMethodName}</p></div>
+              <div className="col-span-2"><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Địa chỉ giao hàng</p>
+                <p className="text-sm">{selected.shippingAddress}</p></div>
             </div>
             <div>
               {(selected.items || []).map((item, i) => (
