@@ -21,5 +21,7 @@
 
         // Số lượng sản phẩm trong cart
         public int Quantity { get; set; }
+
+        public string? ThumbnailUrl { get; set; }
     }
 }

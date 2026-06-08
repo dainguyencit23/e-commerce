@@ -81,8 +81,11 @@ export default function CartPage() {
                   checked={selectedIds.includes(item.id)}
                   onChange={() => toggleItem(item.id)}
                 />
-                <div className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-2xl">
-                  🛍️
+                <div className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                  {item.thumbnailUrl
+                    ? <img src={item.thumbnailUrl} alt={item.productName} className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">🛍️</div>
+                  }
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">{item.productName || item.productVariantName}</p>
