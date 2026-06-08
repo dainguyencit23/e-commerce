@@ -25,6 +25,7 @@ namespace E_commerce.Services.Implementations
                 .Include(c => c.CartItems)
                 .ThenInclude(ci => ci.ProductVariant)
                 .ThenInclude(pv => pv.Product)
+                .ThenInclude(p => p.ProductImages)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
             // Không tìm thấy cart
@@ -43,7 +44,8 @@ namespace E_commerce.Services.Implementations
                     ProductName = ci.ProductVariant.Product != null ? ci.ProductVariant.Product.Name : string.Empty,
                     ProductVariantName = ci.ProductVariant.Name,
                     Price = ci.ProductVariant.Price,
-                    Quantity = ci.Quantity
+                    Quantity = ci.Quantity,
+                    ThumbnailUrl = ci.ProductVariant.Product?.ProductImages.FirstOrDefault()?.ImageUrl
                 }).ToList(),
                 TotalPrice = cart.CartItems.Sum(ci => ci.Quantity * ci.ProductVariant.Price)
             };
